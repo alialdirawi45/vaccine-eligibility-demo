@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vaccine Eligibility Tool (Demo)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f6;
+      color: #222;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 16px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    .card h3 {
+      font-size: 1rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 4px 8px;
+      margin-bottom: 8px;
+    }
+    .checkbox-item {
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .checkbox-item input {
+      margin: 0;
+    }
+    .btn-row {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    .disclaimer {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 8px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .pill-funded {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .pill-private {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .pill-other {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      margin-top: 12px;
+    }
+    .section-title span {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .vaccine-card {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      background: #f9fafb;
+    }
+    .vaccine-name-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+    .vaccine-name-row strong {
+      font-size: 0.9rem;
+    }
+    .vaccine-body p {
+      margin: 2px 0;
+      line-height: 1.35;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 0.8rem;
+    }
+    .no-results {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: #e0f2fe;
+      color: #075985;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .header-badges {
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Vaccine Eligibility Tool (Demo)</h1>
+    <div class="subtitle">
+      Simple example of how an age/condition-based vaccine checker could work. <br>
+      <strong>⚠ For demonstration only – replace rules with your own guidelines before clinical use.</strong>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: INPUT -->
+      <div class="card">
+        <h2>Patient info</h2>
+        <form id="eligibility-form">
+          <label for="age">Age (years)</label>
+          <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g., 72" required>
+
+          <label for="sex">Sex at birth</label>
+          <select id="sex" name="sex">
+            <option value="unspecified">Select...</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="other">Other / not listed</option>
+          </select>
+
+          <label for="pregnant">Currently pregnant?</label>
+          <select id="pregnant" name="pregnant">
+            <option value="no">No / not applicable</option>
+            <option value="yes">Yes</option>
+          </select>
+
+          <label>Medical / risk factors</label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" value="immunocompromised">
+              Immunocompromised
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="diabetes">
+              Diabetes
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="ckd">
+              CKD / dialysis
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="chronic-heart">
+              Chronic heart disease
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="chronic-lung">
+              Chronic lung disease (e.g., COPD, asthma)
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="liver">
+              Chronic liver disease
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="asplenia">
+              Asplenia / hyposplenia
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="ltc">
+              Long-term care resident
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="indigenous">
+              Indigenous
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" value="smoker">
+              Current smoker
+            </label>
+          </div>
+
+          <div class="btn-row">
+            <button type="submit">Check vaccines</button>
+            <button type="button" class="secondary" id="reset-btn">Reset</button>
+          </div>
+
+          <div class="disclaimer">
+            This tool runs entirely in your browser and does not save any data.
+            <br>
+            It is a support tool only and does not replace clinical judgment or product monographs.
+          </div>
+        </form>
+      </div>
+
+      <!-- RIGHT: OUTPUT -->
+      <div class="card">
+        <div class="section-title">
+          <h2>Recommendations</h2>
+          <span id="summary-badge"></span>
+        </div>
+
+        <div id="results-funded"></div>
+        <div id="results-private"></div>
+        <div id="results-other"></div>
+
+        <p class="disclaimer">
+          Demo logic is intentionally simplified. Adapt the rules to:
+          <br>• Your province/territory’s publicly funded schedule (e.g., Ontario MOH)
+          <br>• NACI Canadian Immunization Guide
+          <br>• CPS / product monographs and local policies
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Core evaluation logic (demo only) -------------------------
+
+    function getPatientProfile() {
+      const age = parseInt(document.getElementById('age').value, 10);
+      const sex = document.getElementById('sex').value;
+      const pregnant = document.getElementById('pregnant').value === 'yes';
+
+      const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+      const risks = [];
+      checkboxes.forEach(cb => {
+        if (cb.checked) risks.push(cb.value);
+      });
+
+      return { age, sex, pregnant, risks };
+    }
+
+    // Helper: does patient have a specific risk factor?
+    function hasRisk(profile, key) {
+      return profile.risks.includes(key);
+    }
+
+    // Evaluate a few example vaccines to show structure.
+    function evaluateVaccines(profile) {
+      const list = [];
+
+      // --- 1. Influenza (inactivated) --------------------------------
+      if (!Number.isNaN(profile.age) && profile.age >= 6/12) { // age ≥ 0.5 years
+        let category = "funded";
+        let funding = "Often publicly funded; verify your provincial program (e.g., annual campaign).";
+        let reason = "Age ≥ 6 months.";
+        if (profile.age >= 65) {
+          reason += " Older adult (≥65).";
+        }
+        if (hasRisk(profile, 'chronic-heart') || hasRisk(profile, 'chronic-lung') ||
+            hasRisk(profile, 'diabetes') || hasRisk(profile, 'ckd') ||
+            hasRisk(profile, 'liver')) {
+          reason += " Chronic medical condition.";
+        }
+        const schedule = "1 dose this influenza season (check product-specific details).";
+        const notes = profile.age >= 65
+          ? "In older adults, many guidelines prefer high-dose or adjuvanted products – confirm with local recommendations."
+          : "";
+
+        list.push({
+          name: "Influenza (inactivated)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      }
+
+      // --- 2. COVID-19 (updated formulations) ------------------------
+      if (profile.age >= 6/12) {
+        let category = "funded";
+        let funding = "Typically part of publicly funded programs; confirm with local schedule.";
+        let reason = "Age ≥ 6 months.";
+        if (profile.age >= 65 || hasRisk(profile, 'ckd') || hasRisk(profile, 'immunocompromised')) {
+          reason += " Higher risk due to age and/or medical conditions.";
+        }
+        const schedule = "Follow current NACI / provincial recommendations for dose spacing and seasonal boosters.";
+        const notes = profile.pregnant
+          ? "Pregnancy is generally considered a priority group for COVID-19 vaccination per many guidelines."
+          : "";
+
+        list.push({
+          name: "COVID-19 (updated vaccine)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      }
+
+      // --- 3. Tdap / Td ------------------------------------------------
+      if (profile.age >= 18) {
+        let category = "funded";
+        let funding = "Often publicly funded as a booster every 10 years; verify local schedule.";
+        let reason = "Adult ≥18 years – routine tetanus/diphtheria booster.";
+        const schedule = "1 dose every 10 years (or sooner after certain injuries).";
+        let notes = "Use Tdap at least once in adulthood to boost pertussis protection.";
+
+        if (profile.pregnant && profile.age >= 12 && profile.age <= 55) {
+          reason += " Current pregnancy.";
+          notes += " In pregnancy, many guidelines recommend Tdap once per pregnancy, ideally in late 2nd or 3rd trimester.";
+        }
+
+        list.push({
+          name: "Td/Tdap booster",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      }
+
+      // --- 4. Shingrix (Recombinant zoster) --------------------------
+      if (profile.age >= 50) {
+        let category = "private";
+        let funding = "Often private pay for immunocompetent adults 50–64; coverage policies vary.";
+        let reason = "Age ≥50 years.";
+        const schedule = "2-dose series (dose 2 usually 2–6 months after dose 1).";
+        const notes = "Some jurisdictions fund for specific high-risk or older groups; verify local criteria.";
+
+        list.push({
+          name: "Recombinant zoster vaccine (e.g., Shingrix)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      } else if (profile.age >= 18 && hasRisk(profile, 'immunocompromised')) {
+        let category = "private";
+        let funding = "May be publicly funded for certain high-risk groups in some jurisdictions; confirm with local program.";
+        let reason = "Adult with immunocompromising condition.";
+        const schedule = "2-dose series (dose 2 usually 2–6 months after dose 1).";
+        const notes = "Check local criteria for high-risk funding and timing relative to immunosuppression.";
+
+        list.push({
+          name: "Recombinant zoster vaccine (e.g., Shingrix)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      }
+
+      // --- 5. Pneumococcal (very simplified example) ------------------
+      if (profile.age >= 65) {
+        let category = "funded";
+        let funding = "Commonly publicly funded for adults ≥65 or certain high-risk groups; verify local schedule and product (e.g., PCV vs PPSV23).";
+        let reason = "Age ≥65 years.";
+        if (hasRisk(profile, 'asplenia') || hasRisk(profile, 'ckd') || hasRisk(profile, 'chronic-lung') || hasRisk(profile, 'chronic-heart')) {
+          reason += " Additional risk factor(s) present.";
+        }
+        const schedule = "Follow local guidance for conjugate vs polysaccharide sequence and intervals.";
+        const notes = "Ontario and other provinces specify detailed product/sequence rules – these must be built into your final tool.";
+
+        list.push({
+          name: "Pneumococcal vaccine (PCV/PPSV23 – see local guidance)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      } else if (profile.age >= 18 && (hasRisk(profile, 'asplenia') || hasRisk(profile, 'ckd') || hasRisk(profile, 'immunocompromised'))) {
+        let category = "funded";
+        let funding = "Often publicly funded for certain high-risk adults <65; confirm risk-based criteria in your jurisdiction.";
+        let reason = "Adult with selected high-risk condition (e.g., asplenia, CKD, immunocompromised).";
+        const schedule = "Risk-based pneumococcal schedule per local guidelines (may involve multiple doses and products).";
+        const notes = "";
+
+        list.push({
+          name: "Pneumococcal vaccine (PCV/PPSV23 – see local guidance)",
+          category,
+          funding,
+          reason,
+          schedule,
+          notes
+        });
+      }
+
+      return list;
+    }
+
+    // ---- Display logic ----------------------------------------------
+
+    function renderResults(vaccines) {
+      const fundedContainer = document.getElementById('results-funded');
+      const privateContainer = document.getElementById('results-private');
+      const otherContainer = document.getElementById('results-other');
+      const summaryBadge = document.getElementById('summary-badge');
+
+      fundedContainer.innerHTML = "";
+      privateContainer.innerHTML = "";
+      otherContainer.innerHTML = "";
+      summaryBadge.textContent = "";
+
+      if (!vaccines || vaccines.length === 0) {
+        fundedContainer.innerHTML = '<p class="no-results">No example vaccines triggered. Try changing age or risk factors.</p>';
+        return;
+      }
+
+      const funded = vaccines.filter(v => v.category === 'funded');
+      const priv = vaccines.filter(v => v.category === 'private');
+      const other = vaccines.filter(v => v.category !== 'funded' && v.category !== 'private');
+
+      const total = vaccines.length;
+      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? "s" : ""} suggested (demo)</span>`;
+
+      if (funded.length > 0) {
+        fundedContainer.innerHTML += `
+          <div class="section-title">
+            <h3>Eligible & likely publicly funded (examples)</h3>
+            <span>${funded.length} item(s)</span>
+          </div>
+        `;
+        funded.forEach(v => fundedContainer.appendChild(buildVaccineCard(v, "funded")));
+      }
+
+      if (priv.length > 0) {
+        privateContainer.innerHTML += `
+          <div class="section-title">
+            <h3>Eligible – may be private pay / conditional funding</h3>
+            <span>${priv.length} item(s)</span>
+          </div>
+        `;
+        priv.forEach(v => privateContainer.appendChild(buildVaccineCard(v, "private")));
+      }
+
+      if (other.length > 0) {
+        otherContainer.innerHTML += `
+          <div class="section-title">
+            <h3>Other suggestions / not categorized</h3>
+            <span>${other.length} item(s)</span>
+          </div>
+        `;
+        other.forEach(v => otherContainer.appendChild(buildVaccineCard(v, "other")));
+      }
+    }
+
+    function buildVaccineCard(v, category) {
+      const div = document.createElement('div');
+      div.className = 'vaccine-card';
+
+      let pillClass = 'pill-other';
+      let pillText = 'Other';
+      if (category === 'funded') {
+        pillClass = 'pill-funded';
+        pillText = 'Likely funded (check local)';
+      } else if (category === 'private') {
+        pillClass = 'pill-private';
+        pillText = 'May be private / conditional';
+      }
+
+      div.innerHTML = `
+        <div class="vaccine-name-row">
+          <strong>${v.name}</strong>
+          <span class="pill ${pillClass}">${pillText}</span>
+        </div>
+        <div class="vaccine-body">
+          <p><strong>Why:</strong> ${v.reason || "N/A"}</p>
+          <p><strong>Funding:</strong> ${v.funding || "Specify funding text here."}</p>
+          <p><strong>Schedule:</strong> ${v.schedule || "Add schedule here."}</p>
+          ${v.notes ? `<p class="muted"><strong>Notes:</strong> ${v.notes}</p>` : ""}
+        </div>
+      `;
+      return div;
+    }
+
+    // ---- Event handlers ---------------------------------------------
+
+    document.getElementById('eligibility-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const profile = getPatientProfile();
+      const vaccines = evaluateVaccines(profile);
+      renderResults(vaccines);
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', function() {
+      document.getElementById('eligibility-form').reset();
+      document.getElementById('results-funded').innerHTML = "";
+      document.getElementById('results-private').innerHTML = "";
+      document.getElementById('results-other').innerHTML = "";
+      document.getElementById('summary-badge').textContent = "";
+    });
+  </script>
+</body>
+</html>
