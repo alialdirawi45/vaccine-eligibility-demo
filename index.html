@@ -399,9 +399,11 @@
         <div id="quick-summary"></div>
 
         <div id="detailed-results" class="hidden">
-          <div id="results-pharm"></div>
-          <div id="results-public"></div>
-          <div id="results-private"></div>
+          <div class="section-tagline" style="margin-bottom:6px;">
+            Vaccines are listed in priority order: Prevnar / Shingrix / RSV → Flu / COVID → HPV / Tdap.
+            Funding category is shown on each card.
+          </div>
+          <div id="results-detailed"></div>
         </div>
 
         <p class="disclaimer">
@@ -861,66 +863,30 @@
     // ---------- Detailed rendering -------------------------------------
 
     function renderResults(vaccines) {
-      const pharmContainer = document.getElementById('results-pharm');
-      const publicContainer = document.getElementById('results-public');
-      const privateContainer = document.getElementById('results-private');
+      const detailedContainer = document.getElementById('results-detailed');
       const summaryBadge = document.getElementById('summary-badge');
       const printBtn = document.getElementById('print-btn');
 
       // Always update quick summary
       renderQuickSummary(vaccines);
 
-      pharmContainer.innerHTML = '';
-      publicContainer.innerHTML = '';
-      privateContainer.innerHTML = '';
+      detailedContainer.innerHTML = '';
       summaryBadge.textContent = '';
 
       if (!vaccines || vaccines.length === 0) {
-        pharmContainer.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Try adjusting age or risk factors.</p>';
+        detailedContainer.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Try adjusting age or risk factors.</p>';
         printBtn.disabled = true;
         return;
       }
-
-      const pharm = vaccines.filter(v => v.category === 'pharmacy-funded');
-      const pub = vaccines.filter(v => v.category === 'public-nonpharmacy');
-      const priv = vaccines.filter(v => v.category === 'private');
 
       const total = vaccines.length;
       summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested</span>`;
       printBtn.disabled = false;
 
-      if (pharm.length > 0) {
-        pharmContainer.innerHTML += `
-          <div class="section-title">
-            <h3>Publicly funded – pharmacy</h3>
-            <span>${pharm.length} item(s)</span>
-          </div>
-          <div class="section-tagline">Typically funded and administered directly in community pharmacies (e.g., flu, COVID-19 campaigns).</div>
-        `;
-        pharm.forEach(v => pharmContainer.appendChild(buildVaccineCard(v)));
-      }
-
-      if (pub.length > 0) {
-        publicContainer.innerHTML += `
-          <div class="section-title">
-            <h3>Publicly funded – MD / public health</h3>
-            <span>${pub.length} item(s)</span>
-          </div>
-          <div class="section-tagline">Part of provincial programs but usually given through primary care or public health, not billed through pharmacy.</div>
-        `;
-        pub.forEach(v => publicContainer.appendChild(buildVaccineCard(v)));
-      }
-
-      if (priv.length > 0) {
-        privateContainer.innerHTML += `
-          <div class="section-title">
-            <h3>Private-pay / conditional coverage</h3>
-            <span>${priv.length} item(s)</span>
-          </div>
-          <div class="section-tagline">Not routinely publicly funded – patients may pay out-of-pocket or use private insurance.</div>
-        `;
-        priv.forEach(v => privateContainer.appendChild(buildVaccineCard(v)));
-      }
+      // Vaccines are already globally sorted by priority before calling this
+      vaccines.forEach(v => {
+        detailedContainer.appendChild(buildVaccineCard(v));
+      });
     }
 
     function buildVaccineCard(v) {
@@ -1092,7 +1058,7 @@
       const rawVaccines = evaluateVaccines(profile);
       let vaccines = uniqueVaccines(rawVaccines);
 
-      // Apply global priority ordering
+      // Apply global priority ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
       vaccines.sort((a, b) => getPriority(a) - getPriority(b));
 
       lastProfile = profile;
@@ -1103,9 +1069,7 @@
 
     document.getElementById('reset-btn').addEventListener('click', function () {
       document.getElementById('eligibility-form').reset();
-      document.getElementById('results-pharm').innerHTML = '';
-      document.getElementById('results-public').innerHTML = '';
-      document.getElementById('results-private').innerHTML = '';
+      document.getElementById('results-detailed').innerHTML = '';
       document.getElementById('summary-badge').textContent = '';
       document.getElementById('print-btn').disabled = true;
       document.getElementById('print-area').innerHTML = '';
