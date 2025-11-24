@@ -203,6 +203,62 @@
       color: #6b7280;
       margin-top: 2px;
     }
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
+    /* PRINT SUMMARY AREA */
+    #print-area {
+      display: none;
+      padding: 24px;
+      font-size: 0.9rem;
+      max-width: 800px;
+      margin: 0 auto;
+      color: #111827;
+    }
+    #print-area h1 {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+    #print-area h2 {
+      font-size: 1.1rem;
+      margin-top: 18px;
+      margin-bottom: 4px;
+    }
+    #print-area table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 0.9rem;
+    }
+    #print-area th,
+    #print-area td {
+      border: 1px solid #d1d5db;
+      padding: 6px 8px;
+      vertical-align: top;
+    }
+    #print-area th {
+      background: #f3f4f6;
+      text-align: left;
+    }
+    #print-area .small {
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+      .page {
+        display: none;
+      }
+      #print-area {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body>
@@ -299,6 +355,10 @@
           <span id="summary-badge"></span>
         </div>
 
+        <div class="top-actions">
+          <button type="button" id="print-btn" disabled>Print summary page</button>
+        </div>
+
         <div id="results-pharm"></div>
         <div id="results-public"></div>
         <div id="results-private"></div>
@@ -315,7 +375,28 @@
     </div>
   </div>
 
+  <!-- PRINTABLE SUMMARY AREA -->
+  <div id="print-area"></div>
+
   <script>
+    // ---------- Constants ------------------------------------------------
+
+    const RISK_LABELS = {
+      'immunocompromised': 'Immunocompromised',
+      'diabetes': 'Diabetes',
+      'ckd': 'Chronic kidney disease / dialysis',
+      'chronic-heart': 'Chronic heart disease',
+      'chronic-lung': 'Chronic lung disease (e.g., COPD, asthma)',
+      'liver': 'Chronic liver disease',
+      'asplenia': 'Asplenia / hyposplenia',
+      'ltc': 'Long-term care / retirement home',
+      'indigenous': 'Indigenous',
+      'smoker': 'Current smoker'
+    };
+
+    let lastProfile = null;
+    let lastVaccines = [];
+
     // ---------- Helpers -------------------------------------------------
 
     function getPatientProfile() {
@@ -345,6 +426,18 @@
              hasRisk(profile, 'asplenia') ||
              hasRisk(profile, 'immunocompromised') ||
              hasRisk(profile, 'ltc');
+    }
+
+    function uniqueVaccines(vList) {
+      const seen = new Set();
+      const unique = [];
+      vList.forEach(v => {
+        if (!seen.has(v.id)) {
+          seen.add(v.id);
+          unique.push(v);
+        }
+      });
+      return unique;
     }
 
     // ---------- Core logic: 7 vaccines ----------------------------------
@@ -393,8 +486,8 @@
           schedule: 'Generally 1 dose per season with ≥6 months from previous dose; follow current NACI/ON guidance for exact interval and extra doses in very high-risk groups.',
           napraSchedule: 'Schedule II – vaccine in national immunization programs.',
           rxInfo: 'Prescription usually not required for pharmacist administration; pharmacist assessment needed.',
-          naciQuote: '“NACI recommends that everyone should get a COVID-19 vaccine annually, and some high-risk residents should get two.”',
-          naciRef: 'NACI / COVID-19 seasonal guidance',
+          naciQuote: '“NACI recommends that all individuals 6 months of age and older should receive a COVID-19 vaccine dose every year, with additional doses for some high-risk groups.”',
+          naciRef: 'NACI COVID-19 seasonal guidance',
           notes: ''
         });
       }
@@ -451,8 +544,8 @@
             schedule: '2 IM doses, 2–6 months apart.',
             napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
             rxInfo: 'Schedule II vaccine so a prescription is generally not required for pharmacist dispensing; funding is usually through MD/public health.',
-            naciQuote: '“NACI strongly recommends that individuals 18 years of age and older who are or will be immunocompromised should receive two doses of RZV.”',
-            naciRef: 'NACI updated recommendations on herpes zoster vaccination',
+            naciQuote: '“Herpes zoster vaccines are generally recommended for adults 50 years of age and older.”',
+            naciRef: 'CIG – Herpes zoster (shingles) vaccine chapter',
             notes: ''
           });
         }
@@ -471,8 +564,8 @@
             schedule: '2 IM doses, usually 2–6 months apart (can shorten to 1–2 months in some high-risk situations).',
             napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
             rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; pharmacist assessment and possible documentation for insurers are needed.',
-            naciQuote: '“Herpes zoster vaccines are generally recommended for adults 50 years of age and older.”',
-            naciRef: 'CIG – Herpes zoster (shingles) vaccine chapter',
+            naciQuote: '“NACI strongly recommends that individuals 18 years of age and older who are or will be immunocompromised should receive two doses of RZV.”',
+            naciRef: 'NACI updated recommendations on herpes zoster vaccination',
             notes: ''
           });
         }
@@ -510,7 +603,6 @@
             notes: ''
           });
         }
-        // Pregnancy use is more detailed; for demo we just note it
         if (profile.pregnant) {
           vax.push({
             id: 'rsv-preg',
@@ -596,6 +688,7 @@
       const publicContainer = document.getElementById('results-public');
       const privateContainer = document.getElementById('results-private');
       const summaryBadge = document.getElementById('summary-badge');
+      const printBtn = document.getElementById('print-btn');
 
       pharmContainer.innerHTML = '';
       publicContainer.innerHTML = '';
@@ -604,22 +697,17 @@
 
       if (!vaccines || vaccines.length === 0) {
         pharmContainer.innerHTML = '<p class="no-results">No demo vaccines triggered. Try adjusting age or risk factors.</p>';
+        printBtn.disabled = true;
         return;
       }
 
-      const seen = new Set();
-      const unique = vaccines.filter(v => {
-        if (seen.has(v.id)) return false;
-        seen.add(v.id);
-        return true;
-      });
+      const pharm = vaccines.filter(v => v.category === 'pharmacy-funded');
+      const pub = vaccines.filter(v => v.category === 'public-nonpharmacy');
+      const priv = vaccines.filter(v => v.category === 'private');
 
-      const pharm = unique.filter(v => v.category === 'pharmacy-funded');
-      const pub = unique.filter(v => v.category === 'public-nonpharmacy');
-      const priv = unique.filter(v => v.category === 'private');
-
-      const total = unique.length;
+      const total = vaccines.length;
       summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested (demo)</span>`;
+      printBtn.disabled = false;
 
       if (pharm.length > 0) {
         pharmContainer.innerHTML += `
@@ -691,12 +779,93 @@
       return div;
     }
 
+    // ---------- Print summary ------------------------------------------
+
+    function buildPrintSummary(profile, vaccines) {
+      const container = document.getElementById('print-area');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const sexLabel =
+        profile.sex === 'female' ? 'Female' :
+        profile.sex === 'male' ? 'Male' :
+        profile.sex === 'other' ? 'Other / not listed' :
+        'Not specified';
+
+      const pregLabel = profile.pregnant ? 'Yes' : 'No / not applicable';
+
+      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
+      const riskHtml = riskList.length
+        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
+        : '<p>None selected.</p>';
+
+      const rowsHtml = vaccines.map(v => `
+        <tr>
+          <td>${v.name}</td>
+          <td>${v.funding || ''}</td>
+          <td>${v.reason || ''}</td>
+          <td>${v.schedule || ''}</td>
+        </tr>
+      `).join('');
+
+      container.innerHTML = `
+        <h1>Vaccine Recommendations Summary (Demo)</h1>
+        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
+
+        <h2>Patient information</h2>
+        <table>
+          <tr>
+            <th style="width: 25%;">Parameter</th>
+            <th>Details</th>
+          </tr>
+          <tr>
+            <td>Age</td>
+            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
+          </tr>
+          <tr>
+            <td>Sex at birth</td>
+            <td>${sexLabel}</td>
+          </tr>
+          <tr>
+            <td>Currently pregnant</td>
+            <td>${pregLabel}</td>
+          </tr>
+          <tr>
+            <td>Risk factors</td>
+            <td>${riskHtml}</td>
+          </tr>
+        </table>
+
+        <h2>Recommended vaccines (teaching demo only)</h2>
+        <table>
+          <tr>
+            <th style="width: 25%;">Vaccine</th>
+            <th style="width: 25%;">Funding / schedule status</th>
+            <th style="width: 25%;">Why recommended</th>
+            <th style="width: 25%;">Schedule summary</th>
+          </tr>
+          ${rowsHtml}
+        </table>
+
+        <p class="small" style="margin-top:12px;">
+          This summary is based on a simplified teaching tool and does not replace the Canadian Immunization Guide, NACI statements,
+          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
+        </p>
+      `;
+    }
+
     // ---------- Events --------------------------------------------------
 
     document.getElementById('eligibility-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const profile = getPatientProfile();
-      const vaccines = evaluateVaccines(profile);
+      const rawVaccines = evaluateVaccines(profile);
+      const vaccines = uniqueVaccines(rawVaccines);
+
+      lastProfile = profile;
+      lastVaccines = vaccines;
+
       renderResults(vaccines);
     });
 
@@ -706,6 +875,16 @@
       document.getElementById('results-public').innerHTML = '';
       document.getElementById('results-private').innerHTML = '';
       document.getElementById('summary-badge').textContent = '';
+      document.getElementById('print-btn').disabled = true;
+      document.getElementById('print-area').innerHTML = '';
+      lastProfile = null;
+      lastVaccines = [];
+    });
+
+    document.getElementById('print-btn').addEventListener('click', function () {
+      if (!lastProfile || !lastVaccines || lastVaccines.length === 0) return;
+      buildPrintSummary(lastProfile, lastVaccines);
+      window.print();
     });
   </script>
 </body>
