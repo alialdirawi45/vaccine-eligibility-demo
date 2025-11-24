@@ -393,7 +393,7 @@
         </div>
 
         <div class="top-actions">
-          <button type="button" id="print-btn" disabled>Print summary page</button>
+          <button type="button" id="print-btn" disabled>Print quick summary</button>
         </div>
 
         <div id="quick-summary"></div>
@@ -958,7 +958,117 @@
       return div;
     }
 
-    // ---------- Print summary ------------------------------------------
+    // ---------- Print: QUICK summary -----------------------------------
+
+    function buildPrintQuickSummary(profile, vaccines) {
+      const container = document.getElementById('print-area');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const sexLabel =
+        profile.sex === 'female' ? 'Female' :
+        profile.sex === 'male' ? 'Male' :
+        profile.sex === 'other' ? 'Other / not listed' :
+        'Not specified';
+
+      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
+
+      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
+      const riskHtml = riskList.length
+        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
+        : '<p>None selected.</p>';
+
+      // Build quick eligible list using same grouping as on-screen
+      const eligibleLines = [];
+      const notEligibleNames = [];
+
+      QUICK_GROUPS.forEach(group => {
+        const groupVaccines = vaccines.filter(v => group.matchIds.includes(v.id));
+        if (groupVaccines.length === 0) {
+          notEligibleNames.push(group.label);
+        } else {
+          const v = groupVaccines[0];
+          let fundingText = '';
+          let patientCostText = '';
+          let priceText = '';
+
+          if (v.category === 'pharmacy-funded') {
+            fundingText = 'Publicly funded at pharmacy.';
+            patientCostText = '$0 (no out-of-pocket cost).';
+          } else if (v.category === 'public-nonpharmacy') {
+            fundingText = 'Publicly funded via family doctor / public health.';
+            patientCostText = '$0 (no out-of-pocket cost; not billed through pharmacy).';
+          } else if (v.category === 'private') {
+            fundingText = 'Not publicly funded for this patient (private-pay).';
+            patientCostText = 'Patient pays out-of-pocket or uses private insurance.';
+          }
+
+          if (v.category === 'private' && v.approxPrice) {
+            priceText = ` Approx. price: $${v.approxPrice} per dose.`;
+          }
+
+          let line = `<li><strong>${group.label}</strong> – ${fundingText} ${patientCostText}`;
+          if (priceText) line += ` ${priceText}`;
+          line += '</li>';
+
+          eligibleLines.push(line);
+        }
+      });
+
+      const eligibleHtml = eligibleLines.length
+        ? `<ul>${eligibleLines.join('')}</ul>`
+        : '<p>No vaccines recommended based on current inputs.</p>';
+
+      const notEligibleHtml = notEligibleNames.length
+        ? `<p class="small"><strong>Not currently recommended:</strong> ${notEligibleNames.join(', ')}</p>`
+        : '';
+
+      container.innerHTML = `
+        <h1>Vaccine Quick Summary</h1>
+        <p class="small">
+          Shoppers Drug Mart Meadowvale Town Center #779<br>
+          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
+        </p>
+        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
+
+        <h2>Patient information</h2>
+        <table>
+          <tr>
+            <th style="width: 25%;">Parameter</th>
+            <th>Details</th>
+          </tr>
+          <tr>
+            <td>Age</td>
+            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
+          </tr>
+          <tr>
+            <td>Sex at birth</td>
+            <td>${sexLabel}</td>
+          </tr>
+          <tr>
+            <td>Pregnant in weeks 32–36</td>
+            <td>${pregLabel}</td>
+          </tr>
+          <tr>
+            <td>Risk factors</td>
+            <td>${riskHtml}</td>
+          </tr>
+        </table>
+
+        <h2>Eligible vaccines (quick list)</h2>
+        ${eligibleHtml}
+        ${notEligibleHtml}
+
+        <h2>Notes</h2>
+        <p class="small">
+          This is a brief summary for patient counselling. It does not replace the Canadian Immunization Guide, NACI statements,
+          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
+        </p>
+      `;
+    }
+
+    // ---------- Print: DETAILED summary --------------------------------
 
     function buildPrintSummary(profile, vaccines) {
       const container = document.getElementById('print-area');
@@ -1058,12 +1168,14 @@
     const tabDetailed = document.getElementById('tab-detailed');
     const quickSummaryEl = document.getElementById('quick-summary');
     const detailedResultsEl = document.getElementById('detailed-results');
+    const printBtnGlobal = document.getElementById('print-btn');
 
     tabQuick.addEventListener('click', function () {
       tabQuick.classList.add('active');
       tabDetailed.classList.remove('active');
       quickSummaryEl.classList.remove('hidden');
       detailedResultsEl.classList.add('hidden');
+      printBtnGlobal.textContent = 'Print quick summary';
     });
 
     tabDetailed.addEventListener('click', function () {
@@ -1071,6 +1183,7 @@
       tabQuick.classList.remove('active');
       detailedResultsEl.classList.remove('hidden');
       quickSummaryEl.classList.add('hidden');
+      printBtnGlobal.textContent = 'Print detailed summary';
     });
 
     // ---------- Events --------------------------------------------------
@@ -1109,11 +1222,16 @@
       tabDetailed.classList.remove('active');
       quickSummaryEl.classList.remove('hidden');
       detailedResultsEl.classList.add('hidden');
+      printBtnGlobal.textContent = 'Print quick summary';
     });
 
     document.getElementById('print-btn').addEventListener('click', function () {
       if (!lastProfile || !lastVaccines || lastVaccines.length === 0) return;
-      buildPrintSummary(lastProfile, lastVaccines);
+      if (tabQuick.classList.contains('active')) {
+        buildPrintQuickSummary(lastProfile, lastVaccines);
+      } else {
+        buildPrintSummary(lastProfile, lastVaccines);
+      }
       window.print();
     });
   </script>
