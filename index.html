@@ -1,441 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Vaccine Eligibility Tool</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f4f4f6;
-      color: #222;
-    }
-    .page {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-    h1 {
-      font-size: 1.7rem;
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 16px;
-    }
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
-      gap: 16px;
-    }
-    @media (max-width: 860px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-    }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 16px 18px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      margin-bottom: 16px;
-    }
-    .card h2 {
-      font-size: 1.1rem;
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-    .card h3 {
-      font-size: 1rem;
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-    label {
-      font-size: 0.9rem;
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-    input[type="number"],
-    input[type="text"],
-    select {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-    }
-    input[type="checkbox"] {
-      margin-right: 6px;
-    }
-    .checkbox-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 4px 8px;
-      margin-bottom: 8px;
-    }
-    .checkbox-item {
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .checkbox-item input {
-      margin: 0;
-    }
-    .btn-row {
-      margin-top: 8px;
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      background: #2563eb;
-      color: #fff;
-      font-weight: 600;
-    }
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-    .disclaimer {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-top: 8px;
-    }
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 4px;
-      margin-bottom: 8px;
-      margin-top: 12px;
-    }
-    .section-title span {
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-    .vaccine-card {
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      margin-bottom: 6px;
-      font-size: 0.85rem;
-      background: #f9fafb;
-    }
-    .vaccine-name-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 6px;
-      margin-bottom: 2px;
-    }
-    .vaccine-name-row strong {
-      font-size: 0.9rem;
-    }
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-    .pill-pharm {
-      background: #dcfce7;
-      color: #166534;
-    }
-    .pill-public {
-      background: #e0f2fe;
-      color: #075985;
-    }
-    .pill-private {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    .vaccine-body p {
-      margin: 2px 0;
-      line-height: 1.35;
-    }
-    .muted {
-      color: #6b7280;
-      font-size: 0.8rem;
-    }
-    .no-results {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-top: 4px;
-    }
-    .badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      background: #e0f2fe;
-      color: #075985;
-      font-weight: 600;
-      margin-right: 4px;
-    }
-    #summary-badge {
-      font-size: 0.8rem;
-      color: #4b5563;
-    }
-    .naci-quote {
-      font-size: 0.8rem;
-      color: #374151;
-      margin-top: 4px;
-    }
-    .naci-quote em {
-      font-style: italic;
-    }
-    .section-tagline {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-top: 2px;
-    }
-    .top-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 8px;
-    }
-
-    .tab-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      margin-top: 2px;
-    }
-    .tab-button {
-      background: #e5e7eb;
-      color: #111827;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-      border: none;
-      cursor: pointer;
-    }
-    .tab-button.active {
-      background: #2563eb;
-      color: #fff;
-    }
-    .hidden {
-      display: none;
-    }
-
-    /* PRINT SUMMARY AREA */
-    #print-area {
-      display: none;
-      padding: 24px;
-      font-size: 0.9rem;
-      max-width: 800px;
-      margin: 0 auto;
-      color: #111827;
-    }
-    #print-area h1 {
-      font-size: 1.4rem;
-      margin-bottom: 4px;
-    }
-    #print-area h2 {
-      font-size: 1.1rem;
-      margin-top: 18px;
-      margin-bottom: 4px;
-    }
-    #print-area table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 6px;
-      font-size: 0.9rem;
-    }
-    #print-area th,
-    #print-area td {
-      border: 1px solid #d1d5db;
-      padding: 6px 8px;
-      vertical-align: top;
-    }
-    #print-area th {
-      background: #f3f4f6;
-      text-align: left;
-    }
-    #print-area .small {
-      font-size: 0.8rem;
-      color: #4b5563;
-    }
-
-    @media print {
-      body {
-        background: #fff;
-      }
-      .page {
-        display: none;
-      }
-      #print-area {
-        display: block;
-      }
-    }
-
-    footer {
-      margin-top: 8px;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #9ca3af;
-    }
-  </style>
-</head>
-<body>
-  <div class="page">
-    <h1>Vaccine Eligibility Tool</h1>
-    <div class="subtitle">
-      Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td (Adacel), HPV (Gardasil 9).
-    </div>
-
-    <div class="layout">
-      <!-- LEFT: INPUT -->
-      <div class="card">
-        <h2>Patient information</h2>
-        <form id="eligibility-form">
-          <label for="age">Age (years)</label>
-          <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g., 72" required>
-
-          <label for="sex">Sex at birth</label>
-          <select id="sex" name="sex">
-            <option value="unspecified">Select...</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-            <option value="other">Other / not listed</option>
-          </select>
-
-          <label class="checkbox-item" style="margin-top: 4px; margin-bottom: 8px;">
-            <input type="checkbox" id="pregnantWindow" value="pregnantWindow">
-            Pregnant in weeks 32–36
-          </label>
-
-          <label>Medical / risk factors (simplified)</label>
-          <div class="checkbox-group">
-            <label class="checkbox-item">
-              <input type="checkbox" value="immunocompromised">
-              Immunocompromised
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="diabetes">
-              Diabetes
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="ckd">
-              CKD / dialysis
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="chronic-heart">
-              Chronic heart disease
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="chronic-lung">
-              Chronic lung disease (e.g., COPD, asthma)
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="liver">
-              Chronic liver disease
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="asplenia">
-              Asplenia / hyposplenia
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="ltc">
-              Long-term care / retirement home
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="indigenous">
-              Indigenous
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="smoker">
-              Current smoker
-            </label>
-          </div>
-
-          <div class="btn-row">
-            <button type="submit">Check vaccines</button>
-            <button type="button" class="secondary" id="reset-btn">Reset</button>
-          </div>
-
-          <div class="disclaimer">
-            This tool does not store any data. Vaccine decisions should be confirmed with current NACI guidance,
-            the Canadian Immunization Guide, provincial schedules, and product monographs.
-          </div>
-        </form>
-      </div>
-
-      <!-- RIGHT: OUTPUT -->
-      <div class="card">
-        <div class="section-title">
-          <h2>Recommendations</h2>
-          <span id="summary-badge"></span>
-        </div>
-
-        <div class="tab-row">
-          <button type="button" class="tab-button active" id="tab-quick">Quick summary</button>
-          <button type="button" class="tab-button" id="tab-detailed">Detailed view</button>
-        </div>
-
-        <div class="top-actions">
-          <button type="button" id="print-btn" disabled>Print summary page</button>
-        </div>
-
-        <div id="quick-summary"></div>
-
-        <div id="detailed-results" class="hidden">
-          <div class="section-tagline" style="margin-bottom:6px;">
-            Vaccines are listed in priority order: Prevnar / Shingrix / RSV → Flu / COVID → HPV / Tdap.
-            Funding category is shown on each card.
-          </div>
-          <div id="results-detailed"></div>
-        </div>
-
-        <p class="disclaimer">
-          Categories:
-          <br>• <strong>Publicly funded – pharmacy:</strong> funded and typically available in community pharmacies.
-          <br>• <strong>Publicly funded – MD/public health:</strong> part of provincial programs, usually not billed through pharmacy.
-          <br>• <strong>Private-pay:</strong> patient usually pays; some plans may reimburse.
-          <br><br>
-          NACI quotes are shortened excerpts – refer to the Canadian Immunization Guide and NACI statements for full details.
-        </p>
-      </div>
-    </div>
-
-    <!-- References card -->
-    <div class="card">
-      <h2>Key references</h2>
-      <ul class="disclaimer">
-        <li>Canadian Immunization Guide – chapters on Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, and Immunization of Adults.</li>
-        <li>NACI statements and updates on seasonal influenza vaccines, COVID-19 vaccines, pneumococcal vaccines (PCV20), zoster vaccines (RZV), RSV vaccines, and HPV vaccines.</li>
-        <li>Ontario Ministry of Health – publicly funded immunization schedules and program policy (e.g., Shingrix 65–70, HPV school program, RSV and pneumococcal programs).</li>
-        <li>NAPRA National Drug Schedules – classification of vaccines as Schedule II and province-specific adaptations (e.g., PCV20, RSV, HPV, zoster, Tdap).</li>
-      </ul>
-    </div>
-
-    <footer>
-      Created by Ali Al-Dirawi
-    </footer>
-  </div>
-
-  <!-- PRINTABLE SUMMARY AREA -->
-  <div id="print-area"></div>
-
   <script>
     // ---------- Constants ------------------------------------------------
 
@@ -534,6 +96,29 @@
         }
       });
       return unique;
+    }
+
+    // NEW: collapse public vs private so each vaccine appears only once
+    function collapsePublicPrivate(vaxList) {
+      let filtered = [...vaxList];
+
+      QUICK_GROUPS.forEach(group => {
+        // Is there any public / pharmacy-funded version in this group?
+        const hasPublic = filtered.some(
+          v =>
+            group.matchIds.includes(v.id) &&
+            (v.category === 'pharmacy-funded' || v.category === 'public-nonpharmacy')
+        );
+
+        // If public exists, remove private entries for this group
+        if (hasPublic) {
+          filtered = filtered.filter(
+            v => !(group.matchIds.includes(v.id) && v.category === 'private')
+          );
+        }
+      });
+
+      return filtered;
     }
 
     // ---------- Core logic: vaccines ----------------------------------
@@ -678,6 +263,9 @@
       }
 
       // 5. RSV – Abrysvo (RSVpreF)
+      const is60plus = age >= 60;
+      const is65plus = age >= 65;
+      const is75plus = age >= 75;
       if (is60plus || pregnantWindow) {
         const isVeryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
 
@@ -1056,7 +644,11 @@
       e.preventDefault();
       const profile = getPatientProfile();
       const rawVaccines = evaluateVaccines(profile);
-      let vaccines = uniqueVaccines(rawVaccines);
+
+      // NEW: collapse public vs private so Shingrix/PCV20/RSV/HPV never show twice
+      const collapsed = collapsePublicPrivate(rawVaccines);
+
+      let vaccines = uniqueVaccines(collapsed);
 
       // Apply global priority ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
       vaccines.sort((a, b) => getPriority(a) - getPriority(b));
@@ -1090,5 +682,3 @@
       window.print();
     });
   </script>
-</body>
-</html>
