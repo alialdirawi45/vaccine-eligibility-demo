@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Vaccine Eligibility Tool (Demo)</title>
+  <title>Vaccine Eligibility Tool – Demo (Adults)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
@@ -14,12 +14,12 @@
       color: #222;
     }
     .page {
-      max-width: 960px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.7rem;
       margin-bottom: 4px;
     }
     .subtitle {
@@ -29,10 +29,10 @@
     }
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
       gap: 16px;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .layout {
         grid-template-columns: 1fr;
       }
@@ -113,25 +113,6 @@
       color: #6b7280;
       margin-top: 8px;
     }
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-    .pill-funded {
-      background: #dcfce7;
-      color: #166534;
-    }
-    .pill-private {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    .pill-other {
-      background: #e5e7eb;
-      color: #374151;
-    }
     .section-title {
       display: flex;
       align-items: center;
@@ -163,6 +144,25 @@
     .vaccine-name-row strong {
       font-size: 0.9rem;
     }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .pill-pharm {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .pill-public {
+      background: #e0f2fe;
+      color: #075985;
+    }
+    .pill-private {
+      background: #fef3c7;
+      color: #92400e;
+    }
     .vaccine-body p {
       margin: 2px 0;
       line-height: 1.35;
@@ -186,17 +186,32 @@
       font-weight: 600;
       margin-right: 4px;
     }
-    .header-badges {
-      margin-top: 6px;
+    #summary-badge {
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+    .naci-quote {
+      font-size: 0.8rem;
+      color: #374151;
+      margin-top: 4px;
+    }
+    .naci-quote em {
+      font-style: italic;
+    }
+    .section-tagline {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <h1>Vaccine Eligibility Tool (Demo)</h1>
+    <h1>Adult Vaccine Eligibility Tool (Demo)</h1>
     <div class="subtitle">
-      Simple example of how an age/condition-based vaccine checker could work. <br>
-      <strong>⚠ For demonstration only – replace rules with your own guidelines before clinical use.</strong>
+      Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td, HPV – based on age and simple risk factors.
+      <br>
+      <strong>For teaching/presentation only – simplified summary of NACI and Ontario funding, not for real clinical decisions.</strong>
     </div>
 
     <div class="layout">
@@ -221,7 +236,7 @@
             <option value="yes">Yes</option>
           </select>
 
-          <label>Medical / risk factors</label>
+          <label>Medical / risk factors (simplified)</label>
           <div class="checkbox-group">
             <label class="checkbox-item">
               <input type="checkbox" value="immunocompromised">
@@ -253,7 +268,7 @@
             </label>
             <label class="checkbox-item">
               <input type="checkbox" value="ltc">
-              Long-term care resident
+              Long-term care / retirement home
             </label>
             <label class="checkbox-item">
               <input type="checkbox" value="indigenous">
@@ -271,9 +286,8 @@
           </div>
 
           <div class="disclaimer">
-            This tool runs entirely in your browser and does not save any data.
-            <br>
-            It is a support tool only and does not replace clinical judgment or product monographs.
+            • Tool runs locally in the browser (no data saved).<br>
+            • Wording is simplified for a presentation and does not replace NACI, provincial schedules, or product monographs.
           </div>
         </form>
       </div>
@@ -281,26 +295,28 @@
       <!-- RIGHT: OUTPUT -->
       <div class="card">
         <div class="section-title">
-          <h2>Recommendations</h2>
+          <h2>Recommendations (demo only)</h2>
           <span id="summary-badge"></span>
         </div>
 
-        <div id="results-funded"></div>
+        <div id="results-pharm"></div>
+        <div id="results-public"></div>
         <div id="results-private"></div>
-        <div id="results-other"></div>
 
         <p class="disclaimer">
-          Demo logic is intentionally simplified. Adapt the rules to:
-          <br>• Your province/territory’s publicly funded schedule (e.g., Ontario MOH)
-          <br>• NACI Canadian Immunization Guide
-          <br>• CPS / product monographs and local policies
+          Categories:
+          <br>• <strong>Publicly funded – pharmacy:</strong> funded and typically available in community pharmacies.
+          <br>• <strong>Publicly funded – MD/public health:</strong> provincial program, usually not billed through pharmacy.
+          <br>• <strong>Private-pay:</strong> patient usually pays; some plans may reimburse.
+          <br><br>
+          NACI quotes are shortened excerpts for teaching only – see Canadian Immunization Guide & NACI statements for full details.
         </p>
       </div>
     </div>
   </div>
 
   <script>
-    // ---- Core evaluation logic (demo only) -------------------------
+    // ---------- Helpers -------------------------------------------------
 
     function getPatientProfile() {
       const age = parseInt(document.getElementById('age').value, 10);
@@ -316,230 +332,347 @@
       return { age, sex, pregnant, risks };
     }
 
-    // Helper: does patient have a specific risk factor?
     function hasRisk(profile, key) {
       return profile.risks.includes(key);
     }
 
-    // Evaluate a few example vaccines to show structure.
-    function evaluateVaccines(profile) {
-      const list = [];
-
-      // --- 1. Influenza (inactivated) --------------------------------
-      if (!Number.isNaN(profile.age) && profile.age >= 6/12) { // age ≥ 0.5 years
-        let category = "funded";
-        let funding = "Often publicly funded; verify your provincial program (e.g., annual campaign).";
-        let reason = "Age ≥ 6 months.";
-        if (profile.age >= 65) {
-          reason += " Older adult (≥65).";
-        }
-        if (hasRisk(profile, 'chronic-heart') || hasRisk(profile, 'chronic-lung') ||
-            hasRisk(profile, 'diabetes') || hasRisk(profile, 'ckd') ||
-            hasRisk(profile, 'liver')) {
-          reason += " Chronic medical condition.";
-        }
-        const schedule = "1 dose this influenza season (check product-specific details).";
-        const notes = profile.age >= 65
-          ? "In older adults, many guidelines prefer high-dose or adjuvanted products – confirm with local recommendations."
-          : "";
-
-        list.push({
-          name: "Influenza (inactivated)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      }
-
-      // --- 2. COVID-19 (updated formulations) ------------------------
-      if (profile.age >= 6/12) {
-        let category = "funded";
-        let funding = "Typically part of publicly funded programs; confirm with local schedule.";
-        let reason = "Age ≥ 6 months.";
-        if (profile.age >= 65 || hasRisk(profile, 'ckd') || hasRisk(profile, 'immunocompromised')) {
-          reason += " Higher risk due to age and/or medical conditions.";
-        }
-        const schedule = "Follow current NACI / provincial recommendations for dose spacing and seasonal boosters.";
-        const notes = profile.pregnant
-          ? "Pregnancy is generally considered a priority group for COVID-19 vaccination per many guidelines."
-          : "";
-
-        list.push({
-          name: "COVID-19 (updated vaccine)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      }
-
-      // --- 3. Tdap / Td ------------------------------------------------
-      if (profile.age >= 18) {
-        let category = "funded";
-        let funding = "Often publicly funded as a booster every 10 years; verify local schedule.";
-        let reason = "Adult ≥18 years – routine tetanus/diphtheria booster.";
-        const schedule = "1 dose every 10 years (or sooner after certain injuries).";
-        let notes = "Use Tdap at least once in adulthood to boost pertussis protection.";
-
-        if (profile.pregnant && profile.age >= 12 && profile.age <= 55) {
-          reason += " Current pregnancy.";
-          notes += " In pregnancy, many guidelines recommend Tdap once per pregnancy, ideally in late 2nd or 3rd trimester.";
-        }
-
-        list.push({
-          name: "Td/Tdap booster",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      }
-
-      // --- 4. Shingrix (Recombinant zoster) --------------------------
-      if (profile.age >= 50) {
-        let category = "private";
-        let funding = "Often private pay for immunocompetent adults 50–64; coverage policies vary.";
-        let reason = "Age ≥50 years.";
-        const schedule = "2-dose series (dose 2 usually 2–6 months after dose 1).";
-        const notes = "Some jurisdictions fund for specific high-risk or older groups; verify local criteria.";
-
-        list.push({
-          name: "Recombinant zoster vaccine (e.g., Shingrix)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      } else if (profile.age >= 18 && hasRisk(profile, 'immunocompromised')) {
-        let category = "private";
-        let funding = "May be publicly funded for certain high-risk groups in some jurisdictions; confirm with local program.";
-        let reason = "Adult with immunocompromising condition.";
-        const schedule = "2-dose series (dose 2 usually 2–6 months after dose 1).";
-        const notes = "Check local criteria for high-risk funding and timing relative to immunosuppression.";
-
-        list.push({
-          name: "Recombinant zoster vaccine (e.g., Shingrix)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      }
-
-      // --- 5. Pneumococcal (very simplified example) ------------------
-      if (profile.age >= 65) {
-        let category = "funded";
-        let funding = "Commonly publicly funded for adults ≥65 or certain high-risk groups; verify local schedule and product (e.g., PCV vs PPSV23).";
-        let reason = "Age ≥65 years.";
-        if (hasRisk(profile, 'asplenia') || hasRisk(profile, 'ckd') || hasRisk(profile, 'chronic-lung') || hasRisk(profile, 'chronic-heart')) {
-          reason += " Additional risk factor(s) present.";
-        }
-        const schedule = "Follow local guidance for conjugate vs polysaccharide sequence and intervals.";
-        const notes = "Ontario and other provinces specify detailed product/sequence rules – these must be built into your final tool.";
-
-        list.push({
-          name: "Pneumococcal vaccine (PCV/PPSV23 – see local guidance)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      } else if (profile.age >= 18 && (hasRisk(profile, 'asplenia') || hasRisk(profile, 'ckd') || hasRisk(profile, 'immunocompromised'))) {
-        let category = "funded";
-        let funding = "Often publicly funded for certain high-risk adults <65; confirm risk-based criteria in your jurisdiction.";
-        let reason = "Adult with selected high-risk condition (e.g., asplenia, CKD, immunocompromised).";
-        const schedule = "Risk-based pneumococcal schedule per local guidelines (may involve multiple doses and products).";
-        const notes = "";
-
-        list.push({
-          name: "Pneumococcal vaccine (PCV/PPSV23 – see local guidance)",
-          category,
-          funding,
-          reason,
-          schedule,
-          notes
-        });
-      }
-
-      return list;
+    function isHighRiskAdult(profile) {
+      return hasRisk(profile, 'chronic-heart') ||
+             hasRisk(profile, 'chronic-lung') ||
+             hasRisk(profile, 'diabetes') ||
+             hasRisk(profile, 'ckd') ||
+             hasRisk(profile, 'liver') ||
+             hasRisk(profile, 'asplenia') ||
+             hasRisk(profile, 'immunocompromised') ||
+             hasRisk(profile, 'ltc');
     }
 
-    // ---- Display logic ----------------------------------------------
+    // ---------- Core logic: 7 vaccines ----------------------------------
+
+    function evaluateVaccines(profile) {
+      const vax = [];
+      const age = profile.age;
+
+      if (Number.isNaN(age) || age < 0) return vax;
+
+      const isAdult = age >= 18;
+      const is60plus = age >= 60;
+      const is65plus = age >= 65;
+      const is75plus = age >= 75;
+      const highRisk = isHighRiskAdult(profile);
+
+      // 1. Influenza
+      if (age >= 2) { // pharmacy age cut-off for demo
+        vax.push({
+          id: 'influenza',
+          name: 'Influenza (inactivated seasonal)',
+          category: 'pharmacy-funded',
+          funding: 'Publicly funded in Ontario pharmacies each influenza season (UIIP).',
+          reason: 'Annual influenza vaccine is recommended for everyone ≥6 months; adults, especially ≥65 or with chronic conditions, are priority groups.',
+          schedule: '1 IM dose every influenza season; consider high-dose or adjuvanted options in adults ≥65, per local guidance.',
+          napraSchedule: 'Schedule II – vaccine in national routine programs.',
+          rxInfo: 'Prescription generally not required for pharmacist administration; pharmacist assessment needed.',
+          naciQuote: '“Influenza vaccine should be offered annually to anyone 6 months of age and older who does not have a contraindication.”',
+          naciRef: 'NACI Statement on Seasonal Influenza Vaccine 2025–2026',
+          notes: ''
+        });
+      }
+
+      // 2. COVID-19 (updated formulations, adults)
+      if (age >= 18) {
+        let reason = 'Annual updated COVID-19 vaccine recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
+        if (is65plus || highRisk || profile.pregnant) {
+          reason += ' This patient meets “higher risk” criteria (age ≥65, chronic disease and/or pregnancy).';
+        }
+        vax.push({
+          id: 'covid',
+          name: 'COVID-19 (updated formulation)',
+          category: 'pharmacy-funded',
+          funding: 'Publicly funded in Ontario pharmacies per seasonal COVID-19 program.',
+          reason,
+          schedule: 'Generally 1 dose per season with ≥6 months from previous dose; follow current NACI/ON guidance for exact interval and extra doses in very high-risk groups.',
+          napraSchedule: 'Schedule II – vaccine in national immunization programs.',
+          rxInfo: 'Prescription usually not required for pharmacist administration; pharmacist assessment needed.',
+          naciQuote: '“NACI recommends that everyone should get a COVID-19 vaccine annually, and some high-risk residents should get two.”',
+          naciRef: 'NACI / COVID-19 seasonal guidance',
+          notes: ''
+        });
+      }
+
+      // 3. Pneumococcal – PCV20 (Prevnar 20)
+      if (isAdult) {
+        // Publicly funded indication (Ontario-style simplification)
+        if (is65plus || highRisk) {
+          vax.push({
+            id: 'pcv20',
+            name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
+            category: 'public-nonpharmacy',
+            funding: 'Publicly funded for adults ≥65 and selected high-risk adults <65 (via physician / public health, not usually billed through pharmacy).',
+            reason: is65plus
+              ? 'Adult ≥65 – routine PCV20 dose recommended by NACI; eligible for provincial funding.'
+              : 'Adult <65 with chronic or immunocompromising condition – NACI recommends conjugate pneumococcal vaccination.',
+            schedule: '1 IM dose PCV20 for most adults; follow local guidance if prior PPSV23 or other PCV products were given.',
+            napraSchedule: 'Schedule II in some provinces (e.g., AB) – treated as a vaccine requiring pharmacist assessment.',
+            rxInfo: 'Prescription may or may not be required depending on province/insurer; confirm local policy.',
+            naciQuote: '“Pneu-C-20 vaccine is recommended for all adults 65 years of age and older.”',
+            naciRef: 'CIG – Immunization of adults / Pneumococcal chapter',
+            notes: 'Demo assumes Ontario-style funding (PCV20 publicly funded for 65+ and certain high-risk adults); adjust to your province as needed.'
+          });
+        } else if (age >= 50) {
+          // Private-pay adult who wants extra protection
+          vax.push({
+            id: 'pcv20-private',
+            name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
+            category: 'private',
+            funding: 'Not routinely publicly funded for healthy adults <65; may be private-pay with possible third-party coverage.',
+            reason: 'Adult 50–64 without listed high-risk conditions; some may elect PCV20 for broader pneumococcal protection.',
+            schedule: 'Typically single PCV20 dose; confirm according to prior pneumococcal history and NACI guidance.',
+            napraSchedule: 'Schedule II in some jurisdictions; verify exact scheduling locally.',
+            rxInfo: 'Often no prescription required from a regulatory standpoint, but insurers may require a written Rx.',
+            naciQuote: '“Pneumococcal conjugate 20-valent (Pneu-C-20) vaccine is recommended for adults 65 years of age and older.”',
+            naciRef: 'CIG – Pneumococcal vaccine chapter',
+            notes: 'For teaching: emphasize that healthy 50–64 year olds are not usually publicly funded but may be interested.'
+          });
+        }
+      }
+
+      // 4. Shingrix (RZV)
+      if (age >= 18) {
+        const isImmuno = hasRisk(profile, 'immunocompromised');
+        const is50plus = age >= 50;
+        // Ontario: public funding 65–70 via MD/public health
+        if (age >= 65 && age <= 70) {
+          vax.push({
+            id: 'shingrix-public',
+            name: 'Recombinant zoster vaccine (Shingrix – RZV)',
+            category: 'public-nonpharmacy',
+            funding: 'Publicly funded in Ontario for adults 65–70 years as a 2-dose series, usually via primary care / public health.',
+            reason: 'Age 65–70 – NACI recommends RZV for adults ≥50; Ontario funds a 2-dose series at 65–70.',
+            schedule: '2 IM doses, 2–6 months apart.',
+            napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
+            rxInfo: 'Schedule II vaccine so a prescription is generally not required for pharmacist dispensing; funding is usually through MD/public health.',
+            naciQuote: '“NACI strongly recommends that individuals 18 years of age and older who are or will be immunocompromised should receive two doses of RZV.”',
+            naciRef: 'NACI updated recommendations on herpes zoster vaccination',
+            notes: ''
+          });
+        }
+
+        // Private-pay indication (≥50 or immunocompromised ≥18)
+        if (is50plus || isImmuno) {
+          const reasonParts = [];
+          if (is50plus) reasonParts.push('Adult ≥50 – routine RZV prevention of shingles and post-herpetic neuralgia.');
+          if (isImmuno) reasonParts.push('Immunocompromised adult – high risk of herpes zoster and complications.');
+          vax.push({
+            id: 'shingrix-private',
+            name: 'Recombinant zoster vaccine (Shingrix – RZV)',
+            category: 'private',
+            funding: 'Outside the 65–70 funded window and most high-risk programs, RZV is generally private-pay, though some drug plans cover it.',
+            reason: reasonParts.join(' '),
+            schedule: '2 IM doses, usually 2–6 months apart (can shorten to 1–2 months in some high-risk situations).',
+            napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
+            rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; pharmacist assessment and possible documentation for insurers are needed.',
+            naciQuote: '“Herpes zoster vaccines are generally recommended for adults 50 years of age and older.”',
+            naciRef: 'CIG – Herpes zoster (shingles) vaccine chapter',
+            notes: ''
+          });
+        }
+      }
+
+      // 5. RSV – Abrysvo (RSVpreF)
+      if (is60plus || profile.pregnant) {
+        const isVeryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
+        if (isVeryHighRiskOlder) {
+          vax.push({
+            id: 'rsv-public',
+            name: 'RSV vaccine – Abrysvo (RSVpreF)',
+            category: 'public-nonpharmacy',
+            funding: 'Public RSV programs (e.g., adults ≥75 and selected high-risk 60–74, often via MD / public health). Pharmacy funding varies by province.',
+            reason: 'Older adult with high risk for severe RSV (age ≥75 and/or LTC / chronic comorbidities) – NACI and provincial programs prioritize this group.',
+            schedule: 'Single IM dose (0.5 mL) before or during RSV season; currently no routine booster schedule.',
+            napraSchedule: 'Schedule II – RSV vaccines classified as Schedule II in several jurisdictions.',
+            rxInfo: 'As a Schedule II vaccine, typically no prescription is required for pharmacist administration; confirm local rules and funding.',
+            naciQuote: '“A 0.5 mL dose of RSVpreF should be administered intramuscularly. The standard schedule for individuals 60 years of age and older is one dose.”',
+            naciRef: 'NACI updated guidance on RSV vaccines in older adults',
+            notes: ''
+          });
+        } else if (is60plus) {
+          vax.push({
+            id: 'rsv-private',
+            name: 'RSV vaccine – Abrysvo (RSVpreF)',
+            category: 'private',
+            funding: 'Adults 60–74 without provincial program eligibility often access RSV vaccine as private-pay (some plans may cover).',
+            reason: 'Adult ≥60 without listed very high-risk criteria – may still benefit from a single RSV dose based on shared decision-making.',
+            schedule: 'Single IM dose (0.5 mL) before / during RSV season.',
+            napraSchedule: 'Schedule II – RSV vaccines.',
+            rxInfo: 'Typically does not require a prescription for pharmacist administration, but some insurers may request one.',
+            naciQuote: '“A single 0.5 mL dose of RSVpreF (Abrysvo) is administered intramuscularly in adults 60 years of age and older.”',
+            naciRef: 'CIG – RSV vaccine chapter',
+            notes: ''
+          });
+        }
+        // Pregnancy use is more detailed; for demo we just note it
+        if (profile.pregnant) {
+          vax.push({
+            id: 'rsv-preg',
+            name: 'RSV vaccine – Abrysvo (maternal use)',
+            category: 'public-nonpharmacy',
+            funding: 'In some jurisdictions, a single dose in late pregnancy (e.g., 32–36 weeks) is publicly funded to protect the infant.',
+            reason: 'Pregnant person – maternal RSV vaccination can protect the infant during their first RSV season.',
+            schedule: 'Single IM dose in late pregnancy; timing and eligibility are jurisdiction-specific.',
+            napraSchedule: 'Schedule II – vaccine; use in pregnancy per NACI guidance.',
+            rxInfo: 'Typically arranged via prenatal care / public health clinics rather than community pharmacies.',
+            naciQuote: 'NACI supports maternal RSV vaccination in a defined gestational window to protect infants during their first RSV season.',
+            naciRef: 'NACI RSV guidance – maternal vaccination',
+            notes: ''
+          });
+        }
+      }
+
+      // 6. Tdap / Td – adult boosters
+      if (isAdult) {
+        vax.push({
+          id: 'tdap',
+          name: 'Tdap / Td (tetanus–diphtheria ± pertussis) – adult',
+          category: 'public-nonpharmacy',
+          funding: 'Td/Tdap boosters are publicly funded; in Ontario, one free Tdap booster is recommended for adults ≥18, plus one each pregnancy.',
+          reason: 'All adults should receive one dose of Tdap in adulthood and tetanus/diphtheria boosters every 10 years; each pregnancy should receive Tdap.',
+          schedule: 'If not yet received in adulthood: 1 dose Tdap now, then Td/Tdap every 10 years. In pregnancy: 1 Tdap each pregnancy, ideally 27–32 weeks.',
+          napraSchedule: 'Schedule II – vaccines (tetanus, diphtheria, pertussis).',
+          rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; many programs deliver doses via public health / MD offices.',
+          naciQuote: '“All adults (18 years of age and older) should receive one dose of acellular pertussis-containing vaccine (Tdap) if not previously received during adulthood.”',
+          naciRef: 'CIG – Immunization of adults / Pertussis-containing vaccines',
+          notes: ''
+        });
+      }
+
+      // 7. HPV – Gardasil 9 (9vHPV)
+      if (age >= 9 && age <= 45) {
+        // Publicly funded school-age band (Ontario: grade 7–8 with catch-up)
+        if (age >= 12 && age <= 17) {
+          vax.push({
+            id: 'hpv-public',
+            name: 'HPV vaccine – Gardasil 9',
+            category: 'public-nonpharmacy',
+            funding: 'Publicly funded school-based HPV program (grade 7–8 with catch-up through secondary school; usually via school clinics / public health).',
+            reason: 'Adolescent in the typical Ontario school program window – eligible for publicly funded HPV series if not already completed.',
+            schedule: 'Normally 2-dose schedule in younger adolescents (e.g., 0 and 6–12 months) or 1-dose approaches per updated NACI guidance; confirm current local schedule.',
+            napraSchedule: 'Schedule II – HPV vaccine is Schedule II in the National Drug Schedules.',
+            rxInfo: 'No prescription required as a Schedule II vaccine; in practice, school / public health programs usually deliver publicly funded doses.',
+            naciQuote: '“NACI strongly recommends HPV vaccination for all individuals 9 to 26 years of age.”',
+            naciRef: 'NACI updated recommendations on HPV vaccines',
+            notes: ''
+          });
+        }
+
+        // Young adults and extended adult use (private-pay)
+        if (age >= 18) {
+          const isCore = age <= 26;
+          const ageText = isCore
+            ? 'Core NACI target group (9–26 years).'
+            : 'Age 27–45 – may receive HPV vaccine based on ongoing risk and shared decision-making.';
+          vax.push({
+            id: 'hpv-private',
+            name: 'HPV vaccine – Gardasil 9',
+            category: 'private',
+            funding: 'Typically private-pay once outside the school program; some public programs or employer plans may cover for certain groups.',
+            reason: ageText,
+            schedule: 'Updated NACI guidance: 1-dose schedule for many individuals 9–20, 2-dose schedules in older groups; immunocompromised persons generally need 3 doses – check the most recent CIG / NACI table.',
+            napraSchedule: 'Schedule II – HPV vaccine.',
+            rxInfo: 'As a Schedule II vaccine, a prescription is usually not required for pharmacist administration; insurer rules may still ask for a written Rx.',
+            naciQuote: '“9vHPV vaccine is recommended for all individuals 9 to 26 years of age.”',
+            naciRef: 'CIG – HPV vaccine chapter / NACI HPV update',
+            notes: ''
+          });
+        }
+      }
+
+      return vax;
+    }
+
+    // ---------- Rendering ----------------------------------------------
 
     function renderResults(vaccines) {
-      const fundedContainer = document.getElementById('results-funded');
+      const pharmContainer = document.getElementById('results-pharm');
+      const publicContainer = document.getElementById('results-public');
       const privateContainer = document.getElementById('results-private');
-      const otherContainer = document.getElementById('results-other');
       const summaryBadge = document.getElementById('summary-badge');
 
-      fundedContainer.innerHTML = "";
-      privateContainer.innerHTML = "";
-      otherContainer.innerHTML = "";
-      summaryBadge.textContent = "";
+      pharmContainer.innerHTML = '';
+      publicContainer.innerHTML = '';
+      privateContainer.innerHTML = '';
+      summaryBadge.textContent = '';
 
       if (!vaccines || vaccines.length === 0) {
-        fundedContainer.innerHTML = '<p class="no-results">No example vaccines triggered. Try changing age or risk factors.</p>';
+        pharmContainer.innerHTML = '<p class="no-results">No demo vaccines triggered. Try adjusting age or risk factors.</p>';
         return;
       }
 
-      const funded = vaccines.filter(v => v.category === 'funded');
-      const priv = vaccines.filter(v => v.category === 'private');
-      const other = vaccines.filter(v => v.category !== 'funded' && v.category !== 'private');
+      const seen = new Set();
+      const unique = vaccines.filter(v => {
+        if (seen.has(v.id)) return false;
+        seen.add(v.id);
+        return true;
+      });
 
-      const total = vaccines.length;
-      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? "s" : ""} suggested (demo)</span>`;
+      const pharm = unique.filter(v => v.category === 'pharmacy-funded');
+      const pub = unique.filter(v => v.category === 'public-nonpharmacy');
+      const priv = unique.filter(v => v.category === 'private');
 
-      if (funded.length > 0) {
-        fundedContainer.innerHTML += `
+      const total = unique.length;
+      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested (demo)</span>`;
+
+      if (pharm.length > 0) {
+        pharmContainer.innerHTML += `
           <div class="section-title">
-            <h3>Eligible & likely publicly funded (examples)</h3>
-            <span>${funded.length} item(s)</span>
+            <h3>Publicly funded – pharmacy</h3>
+            <span>${pharm.length} item(s)</span>
           </div>
+          <div class="section-tagline">Typically funded and administered directly in community pharmacies (e.g., flu, COVID-19 campaigns).</div>
         `;
-        funded.forEach(v => fundedContainer.appendChild(buildVaccineCard(v, "funded")));
+        pharm.forEach(v => pharmContainer.appendChild(buildVaccineCard(v)));
+      }
+
+      if (pub.length > 0) {
+        publicContainer.innerHTML += `
+          <div class="section-title">
+            <h3>Publicly funded – MD / public health</h3>
+            <span>${pub.length} item(s)</span>
+          </div>
+          <div class="section-tagline">Part of the provincial program but usually given through primary care or public health, not billed through pharmacy.</div>
+        `;
+        pub.forEach(v => publicContainer.appendChild(buildVaccineCard(v)));
       }
 
       if (priv.length > 0) {
         privateContainer.innerHTML += `
           <div class="section-title">
-            <h3>Eligible – may be private pay / conditional funding</h3>
+            <h3>Private-pay / conditional coverage</h3>
             <span>${priv.length} item(s)</span>
           </div>
+          <div class="section-tagline">Not routinely publicly funded – patients may pay out-of-pocket or use private insurance.</div>
         `;
-        priv.forEach(v => privateContainer.appendChild(buildVaccineCard(v, "private")));
-      }
-
-      if (other.length > 0) {
-        otherContainer.innerHTML += `
-          <div class="section-title">
-            <h3>Other suggestions / not categorized</h3>
-            <span>${other.length} item(s)</span>
-          </div>
-        `;
-        other.forEach(v => otherContainer.appendChild(buildVaccineCard(v, "other")));
+        priv.forEach(v => privateContainer.appendChild(buildVaccineCard(v)));
       }
     }
 
-    function buildVaccineCard(v, category) {
+    function buildVaccineCard(v) {
       const div = document.createElement('div');
       div.className = 'vaccine-card';
 
-      let pillClass = 'pill-other';
-      let pillText = 'Other';
-      if (category === 'funded') {
-        pillClass = 'pill-funded';
-        pillText = 'Likely funded (check local)';
-      } else if (category === 'private') {
-        pillClass = 'pill-private';
-        pillText = 'May be private / conditional';
+      let pillClass = 'pill-private';
+      let pillText = 'Private-pay';
+      if (v.category === 'pharmacy-funded') {
+        pillClass = 'pill-pharm';
+        pillText = 'Publicly funded – pharmacy';
+      } else if (v.category === 'public-nonpharmacy') {
+        pillClass = 'pill-public';
+        pillText = 'Publicly funded – MD / public health';
       }
+
+      const notesBlock = v.notes ? `<p class="muted"><strong>Extra note:</strong> ${v.notes}</p>` : '';
+      const naciBlock = v.naciQuote
+        ? `<p class="naci-quote"><strong>NACI:</strong> <em>${v.naciQuote}</em><br><span class="muted">${v.naciRef}</span></p>`
+        : '';
 
       div.innerHTML = `
         <div class="vaccine-name-row">
@@ -547,30 +680,32 @@
           <span class="pill ${pillClass}">${pillText}</span>
         </div>
         <div class="vaccine-body">
-          <p><strong>Why:</strong> ${v.reason || "N/A"}</p>
-          <p><strong>Funding:</strong> ${v.funding || "Specify funding text here."}</p>
-          <p><strong>Schedule:</strong> ${v.schedule || "Add schedule here."}</p>
-          ${v.notes ? `<p class="muted"><strong>Notes:</strong> ${v.notes}</p>` : ""}
+          <p><strong>Why / eligibility:</strong> ${v.reason || 'N/A'}</p>
+          <p><strong>Funding summary:</strong> ${v.funding || 'N/A'}</p>
+          <p><strong>Schedule:</strong> ${v.schedule || 'N/A'}</p>
+          <p><strong>Schedule / Rx status:</strong> ${v.napraSchedule || 'N/A'} – ${v.rxInfo || ''}</p>
+          ${notesBlock}
+          ${naciBlock}
         </div>
       `;
       return div;
     }
 
-    // ---- Event handlers ---------------------------------------------
+    // ---------- Events --------------------------------------------------
 
-    document.getElementById('eligibility-form').addEventListener('submit', function(e) {
+    document.getElementById('eligibility-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const profile = getPatientProfile();
       const vaccines = evaluateVaccines(profile);
       renderResults(vaccines);
     });
 
-    document.getElementById('reset-btn').addEventListener('click', function() {
+    document.getElementById('reset-btn').addEventListener('click', function () {
       document.getElementById('eligibility-form').reset();
-      document.getElementById('results-funded').innerHTML = "";
-      document.getElementById('results-private').innerHTML = "";
-      document.getElementById('results-other').innerHTML = "";
-      document.getElementById('summary-badge').textContent = "";
+      document.getElementById('results-pharm').innerHTML = '';
+      document.getElementById('results-public').innerHTML = '';
+      document.getElementById('results-private').innerHTML = '';
+      document.getElementById('summary-badge').textContent = '';
     });
   </script>
 </body>
