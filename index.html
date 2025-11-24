@@ -214,6 +214,29 @@
       margin-bottom: 8px;
     }
 
+    .tab-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      margin-top: 2px;
+    }
+    .tab-button {
+      background: #e5e7eb;
+      color: #111827;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      border: none;
+      cursor: pointer;
+    }
+    .tab-button.active {
+      background: #2563eb;
+      color: #fff;
+    }
+    .hidden {
+      display: none;
+    }
+
     /* PRINT SUMMARY AREA */
     #print-area {
       display: none;
@@ -364,13 +387,22 @@
           <span id="summary-badge"></span>
         </div>
 
+        <div class="tab-row">
+          <button type="button" class="tab-button active" id="tab-quick">Quick summary</button>
+          <button type="button" class="tab-button" id="tab-detailed">Detailed view</button>
+        </div>
+
         <div class="top-actions">
           <button type="button" id="print-btn" disabled>Print summary page</button>
         </div>
 
-        <div id="results-pharm"></div>
-        <div id="results-public"></div>
-        <div id="results-private"></div>
+        <div id="quick-summary"></div>
+
+        <div id="detailed-results" class="hidden">
+          <div id="results-pharm"></div>
+          <div id="results-public"></div>
+          <div id="results-private"></div>
+        </div>
 
         <p class="disclaimer">
           Categories:
@@ -424,6 +456,37 @@
     const PRICE_ABRYSVO = 290;
     const PRICE_GARDASIL9 = 225;
     const PRICE_ADACEL = 70; // saved for future use if needed
+
+    // Priority ordering: lower = higher priority
+    const PRIORITY_ORDER = {
+      'pcv20': 1,
+      'pcv20-private': 1,
+      'shingrix-public': 1,
+      'shingrix-private': 1,
+      'rsv-public': 1,
+      'rsv-private': 1,
+      'rsv-preg': 1,
+      'influenza': 2,
+      'covid': 2,
+      'tdap': 3,
+      'hpv-public': 3,
+      'hpv-private': 3
+    };
+
+    function getPriority(v) {
+      return PRIORITY_ORDER[v.id] !== undefined ? PRIORITY_ORDER[v.id] : 99;
+    }
+
+    // For quick summary grouping
+    const QUICK_GROUPS = [
+      { key: 'pcv20', label: 'Prevnar 20 (PCV20)', matchIds: ['pcv20', 'pcv20-private'] },
+      { key: 'shingrix', label: 'Shingrix (RZV)', matchIds: ['shingrix-public', 'shingrix-private'] },
+      { key: 'rsv', label: 'RSV vaccine – Abrysvo', matchIds: ['rsv-public', 'rsv-private', 'rsv-preg'] },
+      { key: 'influenza', label: 'Influenza', matchIds: ['influenza'] },
+      { key: 'covid', label: 'COVID-19', matchIds: ['covid'] },
+      { key: 'hpv', label: 'HPV (Gardasil 9)', matchIds: ['hpv-public', 'hpv-private'] },
+      { key: 'tdap', label: 'Tdap/Td (Adacel)', matchIds: ['tdap'] }
+    ];
 
     let lastProfile = null;
     let lastVaccines = [];
@@ -734,7 +797,68 @@
       return vax;
     }
 
-    // ---------- Rendering ----------------------------------------------
+    // ---------- Quick summary rendering --------------------------------
+
+    function renderQuickSummary(vaccines) {
+      const container = document.getElementById('quick-summary');
+      container.innerHTML = '';
+
+      if (!vaccines || vaccines.length === 0) {
+        container.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Adjust age or risk factors and try again.</p>';
+        return;
+      }
+
+      const eligibleLines = [];
+      const notEligibleNames = [];
+
+      QUICK_GROUPS.forEach(group => {
+        const groupVaccines = vaccines.filter(v => group.matchIds.includes(v.id));
+        if (groupVaccines.length === 0) {
+          notEligibleNames.push(group.label);
+        } else {
+          const v = groupVaccines[0];
+
+          let fundingText = '';
+          let patientCostText = '';
+          let priceText = '';
+
+          if (v.category === 'pharmacy-funded') {
+            fundingText = 'Publicly funded at pharmacy.';
+            patientCostText = '$0 (no out-of-pocket cost).';
+          } else if (v.category === 'public-nonpharmacy') {
+            fundingText = 'Publicly funded via family doctor / public health.';
+            patientCostText = '$0 (no out-of-pocket cost; not billed through pharmacy).';
+          } else if (v.category === 'private') {
+            fundingText = 'Not publicly funded for this patient (private-pay).';
+            patientCostText = 'Patient pays out-of-pocket or uses private insurance.';
+          }
+
+          if (v.category === 'private' && v.approxPrice) {
+            priceText = ` Approx. price: $${v.approxPrice} per dose.`;
+          }
+
+          let line = `<li><strong>${group.label}</strong> – ${fundingText} ${patientCostText}`;
+          if (priceText) line += ` ${priceText}`;
+          line += '</li>';
+
+          eligibleLines.push(line);
+        }
+      });
+
+      let html = '';
+      if (eligibleLines.length > 0) {
+        html += '<h3>Eligible vaccines</h3><ul>' + eligibleLines.join('') + '</ul>';
+      }
+
+      if (notEligibleNames.length > 0) {
+        html += `<h3>Not currently recommended for this patient</h3>
+                 <p class="muted">${notEligibleNames.join(', ')}</p>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---------- Detailed rendering -------------------------------------
 
     function renderResults(vaccines) {
       const pharmContainer = document.getElementById('results-pharm');
@@ -742,6 +866,9 @@
       const privateContainer = document.getElementById('results-private');
       const summaryBadge = document.getElementById('summary-badge');
       const printBtn = document.getElementById('print-btn');
+
+      // Always update quick summary
+      renderQuickSummary(vaccines);
 
       pharmContainer.innerHTML = '';
       publicContainer.innerHTML = '';
@@ -936,13 +1063,37 @@
       `;
     }
 
+    // ---------- Tab switching ------------------------------------------
+
+    const tabQuick = document.getElementById('tab-quick');
+    const tabDetailed = document.getElementById('tab-detailed');
+    const quickSummaryEl = document.getElementById('quick-summary');
+    const detailedResultsEl = document.getElementById('detailed-results');
+
+    tabQuick.addEventListener('click', function () {
+      tabQuick.classList.add('active');
+      tabDetailed.classList.remove('active');
+      quickSummaryEl.classList.remove('hidden');
+      detailedResultsEl.classList.add('hidden');
+    });
+
+    tabDetailed.addEventListener('click', function () {
+      tabDetailed.classList.add('active');
+      tabQuick.classList.remove('active');
+      detailedResultsEl.classList.remove('hidden');
+      quickSummaryEl.classList.add('hidden');
+    });
+
     // ---------- Events --------------------------------------------------
 
     document.getElementById('eligibility-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const profile = getPatientProfile();
       const rawVaccines = evaluateVaccines(profile);
-      const vaccines = uniqueVaccines(rawVaccines);
+      let vaccines = uniqueVaccines(rawVaccines);
+
+      // Apply global priority ordering
+      vaccines.sort((a, b) => getPriority(a) - getPriority(b));
 
       lastProfile = profile;
       lastVaccines = vaccines;
@@ -958,8 +1109,15 @@
       document.getElementById('summary-badge').textContent = '';
       document.getElementById('print-btn').disabled = true;
       document.getElementById('print-area').innerHTML = '';
+      document.getElementById('quick-summary').innerHTML = '';
       lastProfile = null;
       lastVaccines = [];
+
+      // Reset tabs to Quick summary
+      tabQuick.classList.add('active');
+      tabDetailed.classList.remove('active');
+      quickSummaryEl.classList.remove('hidden');
+      detailedResultsEl.classList.add('hidden');
     });
 
     document.getElementById('print-btn').addEventListener('click', function () {
