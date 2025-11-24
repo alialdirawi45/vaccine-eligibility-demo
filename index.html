@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Vaccine Eligibility Tool – Demo (Adults)</title>
+  <title>Vaccine Eligibility Tool</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     * { box-sizing: border-box; }
@@ -42,6 +42,7 @@
       border-radius: 10px;
       padding: 16px 18px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
     }
     .card h2 {
       font-size: 1.1rem;
@@ -60,6 +61,7 @@
       font-weight: 600;
     }
     input[type="number"],
+    input[type="text"],
     select {
       width: 100%;
       padding: 6px 8px;
@@ -67,6 +69,9 @@
       border: 1px solid #ccc;
       font-size: 0.9rem;
       margin-bottom: 10px;
+    }
+    input[type="checkbox"] {
+      margin-right: 6px;
     }
     .checkbox-group {
       display: grid;
@@ -259,21 +264,26 @@
         display: block;
       }
     }
+
+    footer {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
   </style>
 </head>
 <body>
   <div class="page">
-    <h1>Adult Vaccine Eligibility Tool (Demo)</h1>
+    <h1>Vaccine Eligibility Tool</h1>
     <div class="subtitle">
-      Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td, HPV – based on age and simple risk factors.
-      <br>
-      <strong>For teaching/presentation only – simplified summary of NACI and Ontario funding, not for real clinical decisions.</strong>
+      Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td (Adacel), HPV (Gardasil 9).
     </div>
 
     <div class="layout">
       <!-- LEFT: INPUT -->
       <div class="card">
-        <h2>Patient info</h2>
+        <h2>Patient information</h2>
         <form id="eligibility-form">
           <label for="age">Age (years)</label>
           <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g., 72" required>
@@ -286,11 +296,10 @@
             <option value="other">Other / not listed</option>
           </select>
 
-          <label for="pregnant">Currently pregnant?</label>
-          <select id="pregnant" name="pregnant">
-            <option value="no">No / not applicable</option>
-            <option value="yes">Yes</option>
-          </select>
+          <label class="checkbox-item" style="margin-top: 4px; margin-bottom: 8px;">
+            <input type="checkbox" id="pregnantWindow" value="pregnantWindow">
+            Pregnant in weeks 32–36
+          </label>
 
           <label>Medical / risk factors (simplified)</label>
           <div class="checkbox-group">
@@ -342,8 +351,8 @@
           </div>
 
           <div class="disclaimer">
-            • Tool runs locally in the browser (no data saved).<br>
-            • Wording is simplified for a presentation and does not replace NACI, provincial schedules, or product monographs.
+            This tool does not store any data. Vaccine decisions should be confirmed with current NACI guidance,
+            the Canadian Immunization Guide, provincial schedules, and product monographs.
           </div>
         </form>
       </div>
@@ -351,7 +360,7 @@
       <!-- RIGHT: OUTPUT -->
       <div class="card">
         <div class="section-title">
-          <h2>Recommendations (demo only)</h2>
+          <h2>Recommendations</h2>
           <span id="summary-badge"></span>
         </div>
 
@@ -366,13 +375,28 @@
         <p class="disclaimer">
           Categories:
           <br>• <strong>Publicly funded – pharmacy:</strong> funded and typically available in community pharmacies.
-          <br>• <strong>Publicly funded – MD/public health:</strong> provincial program, usually not billed through pharmacy.
+          <br>• <strong>Publicly funded – MD/public health:</strong> part of provincial programs, usually not billed through pharmacy.
           <br>• <strong>Private-pay:</strong> patient usually pays; some plans may reimburse.
           <br><br>
-          NACI quotes are shortened excerpts for teaching only – see Canadian Immunization Guide & NACI statements for full details.
+          NACI quotes are shortened excerpts – refer to the Canadian Immunization Guide and NACI statements for full details.
         </p>
       </div>
     </div>
+
+    <!-- References card -->
+    <div class="card">
+      <h2>Key references</h2>
+      <ul class="disclaimer">
+        <li>Canadian Immunization Guide – chapters on Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, and Immunization of Adults.</li>
+        <li>NACI statements and updates on seasonal influenza vaccines, COVID-19 vaccines, pneumococcal vaccines (PCV20), zoster vaccines (RZV), RSV vaccines, and HPV vaccines.</li>
+        <li>Ontario Ministry of Health – publicly funded immunization schedules and program policy (e.g., Shingrix 65–70, HPV school program, RSV and pneumococcal programs).</li>
+        <li>NAPRA National Drug Schedules – classification of vaccines as Schedule II and province-specific adaptations (e.g., PCV20, RSV, HPV, zoster, Tdap).</li>
+      </ul>
+    </div>
+
+    <footer>
+      Created by Ali Al-Dirawi
+    </footer>
   </div>
 
   <!-- PRINTABLE SUMMARY AREA -->
@@ -394,6 +418,13 @@
       'smoker': 'Current smoker'
     };
 
+    // Prices (per dose) for private-pay vaccines at this pharmacy
+    const PRICE_PREVNAR20 = 145;
+    const PRICE_SHINGRIX = 205;
+    const PRICE_ABRYSVO = 290;
+    const PRICE_GARDASIL9 = 225;
+    const PRICE_ADACEL = 70; // saved for future use if needed
+
     let lastProfile = null;
     let lastVaccines = [];
 
@@ -402,7 +433,7 @@
     function getPatientProfile() {
       const age = parseInt(document.getElementById('age').value, 10);
       const sex = document.getElementById('sex').value;
-      const pregnant = document.getElementById('pregnant').value === 'yes';
+      const pregnantWindow = document.getElementById('pregnantWindow').checked;
 
       const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
       const risks = [];
@@ -410,7 +441,7 @@
         if (cb.checked) risks.push(cb.value);
       });
 
-      return { age, sex, pregnant, risks };
+      return { age, sex, pregnantWindow, risks };
     }
 
     function hasRisk(profile, key) {
@@ -440,7 +471,7 @@
       return unique;
     }
 
-    // ---------- Core logic: 7 vaccines ----------------------------------
+    // ---------- Core logic: vaccines ----------------------------------
 
     function evaluateVaccines(profile) {
       const vax = [];
@@ -453,48 +484,52 @@
       const is65plus = age >= 65;
       const is75plus = age >= 75;
       const highRisk = isHighRiskAdult(profile);
+      const pregnantWindow = profile.pregnantWindow;
 
       // 1. Influenza
-      if (age >= 2) { // pharmacy age cut-off for demo
+      if (age >= 2) {
         vax.push({
           id: 'influenza',
           name: 'Influenza (inactivated seasonal)',
           category: 'pharmacy-funded',
-          funding: 'Publicly funded in Ontario pharmacies each influenza season (UIIP).',
+          funding: 'Publicly funded in Ontario pharmacies each influenza season.',
           reason: 'Annual influenza vaccine is recommended for everyone ≥6 months; adults, especially ≥65 or with chronic conditions, are priority groups.',
-          schedule: '1 IM dose every influenza season; consider high-dose or adjuvanted options in adults ≥65, per local guidance.',
+          schedule: '1 IM dose every influenza season; consider high-dose or adjuvanted options in adults ≥65 per local guidance.',
           napraSchedule: 'Schedule II – vaccine in national routine programs.',
           rxInfo: 'Prescription generally not required for pharmacist administration; pharmacist assessment needed.',
           naciQuote: '“Influenza vaccine should be offered annually to anyone 6 months of age and older who does not have a contraindication.”',
           naciRef: 'NACI Statement on Seasonal Influenza Vaccine 2025–2026',
-          notes: ''
+          notes: '',
+          pharmacistCanInject: true,
+          approxPrice: null
         });
       }
 
       // 2. COVID-19 (updated formulations, adults)
       if (age >= 18) {
-        let reason = 'Annual updated COVID-19 vaccine recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
-        if (is65plus || highRisk || profile.pregnant) {
-          reason += ' This patient meets “higher risk” criteria (age ≥65, chronic disease and/or pregnancy).';
+        let reason = 'Annual updated COVID-19 vaccine is recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
+        if (is65plus || highRisk) {
+          reason += ' This patient meets higher-risk criteria (age ≥65 and/or chronic disease).';
         }
         vax.push({
           id: 'covid',
           name: 'COVID-19 (updated formulation)',
           category: 'pharmacy-funded',
-          funding: 'Publicly funded in Ontario pharmacies per seasonal COVID-19 program.',
+          funding: 'Publicly funded in Ontario pharmacies under the seasonal COVID-19 program.',
           reason,
-          schedule: 'Generally 1 dose per season with ≥6 months from previous dose; follow current NACI/ON guidance for exact interval and extra doses in very high-risk groups.',
+          schedule: 'Generally 1 dose per season with ≥6 months from previous dose; follow current NACI/Ontario guidance for exact interval and extra doses in very high-risk groups.',
           napraSchedule: 'Schedule II – vaccine in national immunization programs.',
           rxInfo: 'Prescription usually not required for pharmacist administration; pharmacist assessment needed.',
           naciQuote: '“NACI recommends that all individuals 6 months of age and older should receive a COVID-19 vaccine dose every year, with additional doses for some high-risk groups.”',
           naciRef: 'NACI COVID-19 seasonal guidance',
-          notes: ''
+          notes: '',
+          pharmacistCanInject: true,
+          approxPrice: null
         });
       }
 
       // 3. Pneumococcal – PCV20 (Prevnar 20)
       if (isAdult) {
-        // Publicly funded indication (Ontario-style simplification)
         if (is65plus || highRisk) {
           vax.push({
             id: 'pcv20',
@@ -505,14 +540,15 @@
               ? 'Adult ≥65 – routine PCV20 dose recommended by NACI; eligible for provincial funding.'
               : 'Adult <65 with chronic or immunocompromising condition – NACI recommends conjugate pneumococcal vaccination.',
             schedule: '1 IM dose PCV20 for most adults; follow local guidance if prior PPSV23 or other PCV products were given.',
-            napraSchedule: 'Schedule II in some provinces (e.g., AB) – treated as a vaccine requiring pharmacist assessment.',
+            napraSchedule: 'Schedule II in some provinces – treated as a vaccine requiring pharmacist assessment.',
             rxInfo: 'Prescription may or may not be required depending on province/insurer; confirm local policy.',
             naciQuote: '“Pneu-C-20 vaccine is recommended for all adults 65 years of age and older.”',
             naciRef: 'CIG – Immunization of adults / Pneumococcal chapter',
-            notes: 'Demo assumes Ontario-style funding (PCV20 publicly funded for 65+ and certain high-risk adults); adjust to your province as needed.'
+            notes: 'Assumes Ontario-style funding (PCV20 publicly funded for 65+ and certain high-risk adults); adjust to your province as needed.',
+            pharmacistCanInject: true,
+            approxPrice: null
           });
         } else if (age >= 50) {
-          // Private-pay adult who wants extra protection
           vax.push({
             id: 'pcv20-private',
             name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
@@ -520,11 +556,13 @@
             funding: 'Not routinely publicly funded for healthy adults <65; may be private-pay with possible third-party coverage.',
             reason: 'Adult 50–64 without listed high-risk conditions; some may elect PCV20 for broader pneumococcal protection.',
             schedule: 'Typically single PCV20 dose; confirm according to prior pneumococcal history and NACI guidance.',
-            napraSchedule: 'Schedule II in some jurisdictions; verify exact scheduling locally.',
-            rxInfo: 'Often no prescription required from a regulatory standpoint, but insurers may require a written Rx.',
+            napraSchedule: 'Schedule II in some jurisdictions; verify exact classification locally.',
+            rxInfo: 'Often no prescription required from a regulatory standpoint, but insurers may require a written prescription.',
             naciQuote: '“Pneumococcal conjugate 20-valent (Pneu-C-20) vaccine is recommended for adults 65 years of age and older.”',
             naciRef: 'CIG – Pneumococcal vaccine chapter',
-            notes: 'For teaching: emphasize that healthy 50–64 year olds are not usually publicly funded but may be interested.'
+            notes: 'Healthy 50–64 year olds are not usually publicly funded but may be interested in additional protection.',
+            pharmacistCanInject: true,
+            approxPrice: PRICE_PREVNAR20
           });
         }
       }
@@ -533,7 +571,7 @@
       if (age >= 18) {
         const isImmuno = hasRisk(profile, 'immunocompromised');
         const is50plus = age >= 50;
-        // Ontario: public funding 65–70 via MD/public health
+
         if (age >= 65 && age <= 70) {
           vax.push({
             id: 'shingrix-public',
@@ -543,14 +581,15 @@
             reason: 'Age 65–70 – NACI recommends RZV for adults ≥50; Ontario funds a 2-dose series at 65–70.',
             schedule: '2 IM doses, 2–6 months apart.',
             napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
-            rxInfo: 'Schedule II vaccine so a prescription is generally not required for pharmacist dispensing; funding is usually through MD/public health.',
+            rxInfo: 'Schedule II vaccine, so a prescription is generally not required for pharmacist dispensing; funding is usually through MD/public health.',
             naciQuote: '“Herpes zoster vaccines are generally recommended for adults 50 years of age and older.”',
             naciRef: 'CIG – Herpes zoster (shingles) vaccine chapter',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: null
           });
         }
 
-        // Private-pay indication (≥50 or immunocompromised ≥18)
         if (is50plus || isImmuno) {
           const reasonParts = [];
           if (is50plus) reasonParts.push('Adult ≥50 – routine RZV prevention of shingles and post-herpetic neuralgia.');
@@ -563,17 +602,20 @@
             reason: reasonParts.join(' '),
             schedule: '2 IM doses, usually 2–6 months apart (can shorten to 1–2 months in some high-risk situations).',
             napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
-            rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; pharmacist assessment and possible documentation for insurers are needed.',
+            rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; pharmacist assessment and documentation for insurers may be needed.',
             naciQuote: '“NACI strongly recommends that individuals 18 years of age and older who are or will be immunocompromised should receive two doses of RZV.”',
             naciRef: 'NACI updated recommendations on herpes zoster vaccination',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: PRICE_SHINGRIX
           });
         }
       }
 
       // 5. RSV – Abrysvo (RSVpreF)
-      if (is60plus || profile.pregnant) {
+      if (is60plus || pregnantWindow) {
         const isVeryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
+
         if (isVeryHighRiskOlder) {
           vax.push({
             id: 'rsv-public',
@@ -586,7 +628,9 @@
             rxInfo: 'As a Schedule II vaccine, typically no prescription is required for pharmacist administration; confirm local rules and funding.',
             naciQuote: '“A 0.5 mL dose of RSVpreF should be administered intramuscularly. The standard schedule for individuals 60 years of age and older is one dose.”',
             naciRef: 'NACI updated guidance on RSV vaccines in older adults',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: null
           });
         } else if (is60plus) {
           vax.push({
@@ -594,52 +638,58 @@
             name: 'RSV vaccine – Abrysvo (RSVpreF)',
             category: 'private',
             funding: 'Adults 60–74 without provincial program eligibility often access RSV vaccine as private-pay (some plans may cover).',
-            reason: 'Adult ≥60 without listed very high-risk criteria – may still benefit from a single RSV dose based on shared decision-making.',
+            reason: 'Adult ≥60 without listed very high-risk criteria – may benefit from a single RSV dose based on shared decision-making.',
             schedule: 'Single IM dose (0.5 mL) before / during RSV season.',
             napraSchedule: 'Schedule II – RSV vaccines.',
             rxInfo: 'Typically does not require a prescription for pharmacist administration, but some insurers may request one.',
             naciQuote: '“A single 0.5 mL dose of RSVpreF (Abrysvo) is administered intramuscularly in adults 60 years of age and older.”',
             naciRef: 'CIG – RSV vaccine chapter',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: PRICE_ABRYSVO
           });
         }
-        if (profile.pregnant) {
+
+        if (pregnantWindow) {
           vax.push({
             id: 'rsv-preg',
             name: 'RSV vaccine – Abrysvo (maternal use)',
             category: 'public-nonpharmacy',
             funding: 'In some jurisdictions, a single dose in late pregnancy (e.g., 32–36 weeks) is publicly funded to protect the infant.',
-            reason: 'Pregnant person – maternal RSV vaccination can protect the infant during their first RSV season.',
+            reason: 'Pregnant person in weeks 32–36 – maternal RSV vaccination can protect the infant during their first RSV season.',
             schedule: 'Single IM dose in late pregnancy; timing and eligibility are jurisdiction-specific.',
             napraSchedule: 'Schedule II – vaccine; use in pregnancy per NACI guidance.',
             rxInfo: 'Typically arranged via prenatal care / public health clinics rather than community pharmacies.',
             naciQuote: 'NACI supports maternal RSV vaccination in a defined gestational window to protect infants during their first RSV season.',
             naciRef: 'NACI RSV guidance – maternal vaccination',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: null
           });
         }
       }
 
-      // 6. Tdap / Td – adult boosters
+      // 6. Tdap / Td – adult boosters (Adacel)
       if (isAdult) {
         vax.push({
           id: 'tdap',
-          name: 'Tdap / Td (tetanus–diphtheria ± pertussis) – adult',
+          name: 'Tdap / Td (tetanus–diphtheria ± pertussis) – Adacel',
           category: 'public-nonpharmacy',
-          funding: 'Td/Tdap boosters are publicly funded; in Ontario, one free Tdap booster is recommended for adults ≥18, plus one each pregnancy.',
+          funding: 'Td/Tdap boosters are publicly funded; in Ontario, one Tdap booster is recommended for adults ≥18, plus one each pregnancy.',
           reason: 'All adults should receive one dose of Tdap in adulthood and tetanus/diphtheria boosters every 10 years; each pregnancy should receive Tdap.',
           schedule: 'If not yet received in adulthood: 1 dose Tdap now, then Td/Tdap every 10 years. In pregnancy: 1 Tdap each pregnancy, ideally 27–32 weeks.',
           napraSchedule: 'Schedule II – vaccines (tetanus, diphtheria, pertussis).',
           rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; many programs deliver doses via public health / MD offices.',
           naciQuote: '“All adults (18 years of age and older) should receive one dose of acellular pertussis-containing vaccine (Tdap) if not previously received during adulthood.”',
           naciRef: 'CIG – Immunization of adults / Pertussis-containing vaccines',
-          notes: ''
+          notes: '',
+          pharmacistCanInject: false, // per your instruction
+          approxPrice: null // Adacel price saved but not displayed (treated as publicly funded here)
         });
       }
 
       // 7. HPV – Gardasil 9 (9vHPV)
       if (age >= 9 && age <= 45) {
-        // Publicly funded school-age band (Ontario: grade 7–8 with catch-up)
         if (age >= 12 && age <= 17) {
           vax.push({
             id: 'hpv-public',
@@ -647,16 +697,17 @@
             category: 'public-nonpharmacy',
             funding: 'Publicly funded school-based HPV program (grade 7–8 with catch-up through secondary school; usually via school clinics / public health).',
             reason: 'Adolescent in the typical Ontario school program window – eligible for publicly funded HPV series if not already completed.',
-            schedule: 'Normally 2-dose schedule in younger adolescents (e.g., 0 and 6–12 months) or 1-dose approaches per updated NACI guidance; confirm current local schedule.',
+            schedule: 'Typically 2-dose schedule in younger adolescents (e.g., 0 and 6–12 months) or 1-dose approaches per updated NACI guidance; confirm current local schedule.',
             napraSchedule: 'Schedule II – HPV vaccine is Schedule II in the National Drug Schedules.',
-            rxInfo: 'No prescription required as a Schedule II vaccine; in practice, school / public health programs usually deliver publicly funded doses.',
+            rxInfo: 'No prescription required as a Schedule II vaccine; school / public health programs usually deliver publicly funded doses.',
             naciQuote: '“NACI strongly recommends HPV vaccination for all individuals 9 to 26 years of age.”',
             naciRef: 'NACI updated recommendations on HPV vaccines',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: null
           });
         }
 
-        // Young adults and extended adult use (private-pay)
         if (age >= 18) {
           const isCore = age <= 26;
           const ageText = isCore
@@ -666,14 +717,16 @@
             id: 'hpv-private',
             name: 'HPV vaccine – Gardasil 9',
             category: 'private',
-            funding: 'Typically private-pay once outside the school program; some public programs or employer plans may cover for certain groups.',
+            funding: 'Typically private-pay once outside the school program; some public programs or employer plans may cover certain groups.',
             reason: ageText,
             schedule: 'Updated NACI guidance: 1-dose schedule for many individuals 9–20, 2-dose schedules in older groups; immunocompromised persons generally need 3 doses – check the most recent CIG / NACI table.',
             napraSchedule: 'Schedule II – HPV vaccine.',
-            rxInfo: 'As a Schedule II vaccine, a prescription is usually not required for pharmacist administration; insurer rules may still ask for a written Rx.',
+            rxInfo: 'As a Schedule II vaccine, a prescription is usually not required for pharmacist administration; insurer rules may still ask for a written prescription.',
             naciQuote: '“9vHPV vaccine is recommended for all individuals 9 to 26 years of age.”',
             naciRef: 'CIG – HPV vaccine chapter / NACI HPV update',
-            notes: ''
+            notes: '',
+            pharmacistCanInject: true,
+            approxPrice: PRICE_GARDASIL9
           });
         }
       }
@@ -696,7 +749,7 @@
       summaryBadge.textContent = '';
 
       if (!vaccines || vaccines.length === 0) {
-        pharmContainer.innerHTML = '<p class="no-results">No demo vaccines triggered. Try adjusting age or risk factors.</p>';
+        pharmContainer.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Try adjusting age or risk factors.</p>';
         printBtn.disabled = true;
         return;
       }
@@ -706,7 +759,7 @@
       const priv = vaccines.filter(v => v.category === 'private');
 
       const total = vaccines.length;
-      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested (demo)</span>`;
+      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested</span>`;
       printBtn.disabled = false;
 
       if (pharm.length > 0) {
@@ -726,7 +779,7 @@
             <h3>Publicly funded – MD / public health</h3>
             <span>${pub.length} item(s)</span>
           </div>
-          <div class="section-tagline">Part of the provincial program but usually given through primary care or public health, not billed through pharmacy.</div>
+          <div class="section-tagline">Part of provincial programs but usually given through primary care or public health, not billed through pharmacy.</div>
         `;
         pub.forEach(v => publicContainer.appendChild(buildVaccineCard(v)));
       }
@@ -762,6 +815,14 @@
         ? `<p class="naci-quote"><strong>NACI:</strong> <em>${v.naciQuote}</em><br><span class="muted">${v.naciRef}</span></p>`
         : '';
 
+      const injectText = v.pharmacistCanInject === false
+        ? 'No – must be administered by another healthcare provider.'
+        : 'Yes – can be administered at the pharmacy.';
+
+      const priceBlock = v.category === 'private' && v.approxPrice
+        ? `<p><strong>Approx. price:</strong> $${v.approxPrice} per dose (Shoppers Drug Mart Meadowvale Town Center #779; taxes and admin fees extra).</p>`
+        : '';
+
       div.innerHTML = `
         <div class="vaccine-name-row">
           <strong>${v.name}</strong>
@@ -772,6 +833,8 @@
           <p><strong>Funding summary:</strong> ${v.funding || 'N/A'}</p>
           <p><strong>Schedule:</strong> ${v.schedule || 'N/A'}</p>
           <p><strong>Schedule / Rx status:</strong> ${v.napraSchedule || 'N/A'} – ${v.rxInfo || ''}</p>
+          <p><strong>Pharmacist injection:</strong> ${injectText}</p>
+          ${priceBlock}
           ${notesBlock}
           ${naciBlock}
         </div>
@@ -793,24 +856,33 @@
         profile.sex === 'other' ? 'Other / not listed' :
         'Not specified';
 
-      const pregLabel = profile.pregnant ? 'Yes' : 'No / not applicable';
+      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
 
       const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
       const riskHtml = riskList.length
         ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
         : '<p>None selected.</p>';
 
-      const rowsHtml = vaccines.map(v => `
+      const rowsHtml = vaccines.map(v => {
+        const priceText = v.category === 'private' && v.approxPrice
+          ? `$${v.approxPrice} per dose`
+          : '';
+        return `
         <tr>
           <td>${v.name}</td>
           <td>${v.funding || ''}</td>
           <td>${v.reason || ''}</td>
           <td>${v.schedule || ''}</td>
-        </tr>
-      `).join('');
+          <td>${priceText}</td>
+        </tr>`;
+      }).join('');
 
       container.innerHTML = `
-        <h1>Vaccine Recommendations Summary (Demo)</h1>
+        <h1>Vaccine Recommendations Summary</h1>
+        <p class="small">
+          Shoppers Drug Mart Meadowvale Town Center #779<br>
+          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
+        </p>
         <p class="small">Generated on ${dateStr} at ${timeStr}</p>
 
         <h2>Patient information</h2>
@@ -828,7 +900,7 @@
             <td>${sexLabel}</td>
           </tr>
           <tr>
-            <td>Currently pregnant</td>
+            <td>Pregnant in weeks 32–36</td>
             <td>${pregLabel}</td>
           </tr>
           <tr>
@@ -837,20 +909,29 @@
           </tr>
         </table>
 
-        <h2>Recommended vaccines (teaching demo only)</h2>
+        <h2>Recommended vaccines</h2>
         <table>
           <tr>
-            <th style="width: 25%;">Vaccine</th>
-            <th style="width: 25%;">Funding / schedule status</th>
-            <th style="width: 25%;">Why recommended</th>
-            <th style="width: 25%;">Schedule summary</th>
+            <th style="width: 22%;">Vaccine</th>
+            <th style="width: 24%;">Funding / schedule status</th>
+            <th style="width: 24%;">Why recommended</th>
+            <th style="width: 20%;">Schedule summary</th>
+            <th style="width: 10%;">Approx. price (per dose)</th>
           </tr>
           ${rowsHtml}
         </table>
 
-        <p class="small" style="margin-top:12px;">
-          This summary is based on a simplified teaching tool and does not replace the Canadian Immunization Guide, NACI statements,
+        <h2>Notes & references</h2>
+        <p class="small">
+          This summary is based on a simplified tool. It does not replace the Canadian Immunization Guide, NACI statements,
           provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
+        </p>
+        <p class="small">
+          Key sources include the Canadian Immunization Guide (Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, Immunization of Adults),
+          NACI guidance documents, and Ontario Ministry of Health publicly funded immunization schedules.
+        </p>
+        <p class="small">
+          Prices are approximate for Shoppers Drug Mart Meadowvale Town Center #779 and may change over time. Taxes and administration fees are not included.
         </p>
       `;
     }
