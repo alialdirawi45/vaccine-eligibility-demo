@@ -1,1238 +1,1640 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Vaccine Eligibility Tool</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Vaccine Eligibility Tool – Preliminary Code (Updated)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg: #020617;
+      --bg-elevated: #0f172a;
+      --bg-soft: #020617;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --accent-strong: #4ade80;
+      --danger: #f97373;
+      --border-subtle: #1f2937;
+      --border-strong: #374151;
+      --pill-bg: #020617;
+      --pill-border: #4b5563;
+      --card-radius: 14px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.75);
+      --shadow-subtle: 0 10px 30px rgba(15, 23, 42, 0.6);
+      --chip-bg: rgba(15, 23, 42, 0.9);
+      --chip-border: #4b5563;
+      --tab-bg-active: #111827;
+      --tab-bg: #020617;
+      --tab-border-active: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
       padding: 0;
-      background: #f4f4f6;
-      color: #222;
-    }
-    .page {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
-    h1 {
-      font-size: 1.7rem;
-      margin-bottom: 4px;
-    }
-    .subtitle {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 16px;
-    }
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
-      gap: 16px;
-    }
-    @media (max-width: 860px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-    }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 16px 18px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      margin-bottom: 16px;
-    }
-    .card h2 {
-      font-size: 1.1rem;
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-    .card h3 {
-      font-size: 1rem;
-      margin-top: 0;
-      margin-bottom: 8px;
-    }
-    label {
-      font-size: 0.9rem;
-      display: block;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-    input[type="number"],
-    input[type="text"],
-    select {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-    }
-    input[type="checkbox"] {
-      margin-right: 6px;
-    }
-    .checkbox-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 4px 8px;
-      margin-bottom: 8px;
-    }
-    .checkbox-item {
-      font-size: 0.85rem;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 45%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
       display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .page-shell {
+      width: 100%;
+      max-width: 1220px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .app-card {
+      background: radial-gradient(circle at 0 0, rgba(148, 163, 184, 0.18) 0, transparent 50%),
+                  radial-gradient(circle at 100% 0, rgba(56, 189, 248, 0.16) 0, transparent 55%),
+                  linear-gradient(145deg, #020617 0, #020617 46%, #020617 100%);
+      border-radius: 26px;
+      padding: 22px 22px 20px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(20px);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title-stack h1 {
+      margin: 0 0 4px;
+      font-size: 21px;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-pill {
+      font-size: 11px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(52, 211, 153, 0.6);
+      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.22), transparent 60%);
+      color: var(--accent-strong);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .title-stack p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--chip-border);
+      background: var(--chip-bg);
+      color: var(--muted);
+      display: inline-flex;
       align-items: center;
       gap: 4px;
     }
-    .checkbox-item input {
-      margin: 0;
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.9);
     }
-    .btn-row {
-      margin-top: 8px;
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .badge-row {
+        justify-content: flex-start;
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.7) 0, rgba(15, 23, 42, 0.98) 52%, #020617 100%);
+      border-radius: var(--card-radius);
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: var(--shadow-subtle);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.04), transparent 55%);
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .panel-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-header {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
     }
-    button {
+
+    .panel-header h2 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .panel-kicker {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+
+    .panel-subtitle {
+      margin: 2px 0 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .required-dot {
+      color: var(--accent-strong);
+      margin-left: 2px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 9px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+    }
+
+    .checkbox-cluster {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr;
+      gap: 6px 8px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 640px) {
+      .checkbox-cluster {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      margin-top: 2px;
+      accent-color: var(--accent);
+    }
+
+    .helper-text {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .button-primary {
       border: none;
       border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 0.9rem;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       cursor: pointer;
-      background: #2563eb;
-      color: #fff;
-      font-weight: 600;
+      background: radial-gradient(circle at 0 0, rgba(74, 222, 128, 0.2) 0, transparent 55%),
+                  linear-gradient(135deg, #22c55e, #16a34a, #22c55e);
+      color: #022c22;
+      box-shadow: 0 12px 30px rgba(34, 197, 94, 0.55);
+      position: relative;
+      overflow: hidden;
     }
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
+
+    .button-primary span.icon {
+      font-size: 14px;
     }
-    button:disabled {
-      opacity: 0.5;
-      cursor: default;
+
+    .button-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 6px 18px rgba(34, 197, 94, 0.5);
     }
-    .disclaimer {
-      font-size: 0.75rem;
-      color: #6b7280;
+
+    .button-ghost {
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      padding: 5px 10px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      background: transparent;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .button-ghost span.icon {
+      font-size: 13px;
+    }
+
+    .tab-bar {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(31, 41, 55, 0.85);
+    }
+
+    .tab-button {
+      border-radius: 999px;
+      border: 1px solid transparent;
+      padding: 5px 10px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: transparent;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .tab-button span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.7);
+    }
+
+    .tab-button.active {
+      background: var(--tab-bg-active);
+      color: #e5e7eb;
+      border-color: var(--tab-border-active);
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35);
+    }
+
+    .tab-button.active span.dot {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.85);
+    }
+
+    .print-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
       margin-top: 8px;
     }
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 4px;
-      margin-bottom: 8px;
-      margin-top: 12px;
-    }
-    .section-title span {
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-    .vaccine-card {
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      padding: 8px 10px;
-      margin-bottom: 6px;
-      font-size: 0.85rem;
-      background: #f9fafb;
-    }
-    .vaccine-name-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 6px;
-      margin-bottom: 2px;
-    }
-    .vaccine-name-row strong {
-      font-size: 0.9rem;
-    }
-    .pill {
-      display: inline-block;
-      padding: 2px 8px;
+
+    .print-button {
       border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
+      border: 1px dashed rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+      padding: 4px 9px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
     }
-    .pill-pharm {
-      background: #dcfce7;
-      color: #166534;
+
+    .print-button span.icon {
+      font-size: 11px;
     }
-    .pill-public {
-      background: #e0f2fe;
-      color: #075985;
+
+    .results-shell {
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.98), #020617);
+      padding: 10px 11px 10px;
+      max-height: 540px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .pill-private {
-      background: #fef3c7;
-      color: #92400e;
+
+    .results-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
     }
-    .vaccine-body p {
-      margin: 2px 0;
-      line-height: 1.35;
+
+    .results-scroll::-webkit-scrollbar {
+      width: 6px;
     }
-    .muted {
-      color: #6b7280;
-      font-size: 0.8rem;
+
+    .results-scroll::-webkit-scrollbar-track {
+      background: #020617;
     }
-    .no-results {
-      font-size: 0.9rem;
-      color: #6b7280;
-      margin-top: 4px;
+
+    .results-scroll::-webkit-scrollbar-thumb {
+      background: #4b5563;
+      border-radius: 999px;
     }
-    .badge {
-      display: inline-block;
+
+    .results-meta {
+      font-size: 10px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .results-meta strong {
+      color: var(--accent-strong);
+      font-weight: 500;
+    }
+
+    .tab-panel {
+      display: none;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .pill {
+      border-radius: 999px;
+      border: 1px solid var(--pill-border);
+      background: var(--pill-bg);
+      padding: 3px 8px;
+      font-size: 10px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pill span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+
+    .vaccine-block {
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.85);
+      background: rgba(15, 23, 42, 0.75);
+      padding: 8px 9px;
+      margin-bottom: 8px;
+    }
+
+    .vaccine-block-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .vaccine-block-header h3 {
+      margin: 0;
+      font-size: 13px;
+    }
+
+    .tag {
+      font-size: 9px;
       padding: 2px 6px;
       border-radius: 999px;
-      font-size: 0.7rem;
-      background: #e0f2fe;
-      color: #075985;
-      font-weight: 600;
-      margin-right: 4px;
+      border: 1px solid rgba(34, 197, 94, 0.7);
+      color: var(--accent-strong);
+      background: rgba(22, 163, 74, 0.12);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
     }
-    #summary-badge {
-      font-size: 0.8rem;
-      color: #4b5563;
+
+    .tag-muted {
+      border-color: rgba(148, 163, 184, 0.9);
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.85);
     }
-    .naci-quote {
-      font-size: 0.8rem;
-      color: #374151;
+
+    .vaccine-block p {
+      margin: 3px 0;
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+
+    .vaccine-block .meta {
+      font-size: 10px;
+      color: var(--muted);
       margin-top: 4px;
     }
-    .naci-quote em {
-      font-style: italic;
-    }
-    .section-tagline {
-      font-size: 0.75rem;
-      color: #6b7280;
-      margin-top: 2px;
-    }
-    .top-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 8px;
-    }
 
-    .tab-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      margin-top: 2px;
-    }
-    .tab-button {
-      background: #e5e7eb;
-      color: #111827;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-      border: none;
-      cursor: pointer;
-    }
-    .tab-button.active {
-      background: #2563eb;
-      color: #fff;
-    }
-    .hidden {
-      display: none;
-    }
-
-    /* PRINT SUMMARY AREA */
-    #print-area {
-      display: none;
-      padding: 24px;
-      font-size: 0.9rem;
-      max-width: 800px;
-      margin: 0 auto;
-      color: #111827;
-    }
-    #print-area h1 {
-      font-size: 1.4rem;
-      margin-bottom: 4px;
-    }
-    #print-area h2 {
-      font-size: 1.1rem;
-      margin-top: 18px;
-      margin-bottom: 4px;
-    }
-    #print-area table {
+    .indication-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 6px;
-      font-size: 0.9rem;
+      margin-top: 4px;
+      font-size: 11px;
     }
-    #print-area th,
-    #print-area td {
-      border: 1px solid #d1d5db;
-      padding: 6px 8px;
+
+    .indication-table th,
+    .indication-table td {
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 6px 6px;
       vertical-align: top;
     }
-    #print-area th {
-      background: #f3f4f6;
-      text-align: left;
+
+    .indication-table th {
+      background: #020617;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
     }
-    #print-area .small {
-      font-size: 0.8rem;
-      color: #4b5563;
+
+    .indication-table td strong {
+      color: #e5e7eb;
+    }
+
+    .ref {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 1px dashed rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.6);
+      margin-top: 4px;
+    }
+
+    .danger-text {
+      color: var(--danger);
     }
 
     @media print {
       body {
         background: #fff;
       }
-      .page {
-        display: none;
+      .page-shell {
+        margin: 0;
+        padding: 0;
       }
-      #print-area {
+      .app-card {
+        box-shadow: none;
+        border-radius: 0;
+        border: none;
+        background: #fff;
+      }
+      .header-row,
+      .panel,
+      .panel-header,
+      .actions-row,
+      .badge-row,
+      .button-primary,
+      .button-ghost,
+      .tab-bar,
+      .print-row {
+        display: none !important;
+      }
+      .layout {
         display: block;
       }
-    }
-
-    footer {
-      margin-top: 8px;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #9ca3af;
+      .results-shell {
+        max-height: none;
+        border: none;
+        padding: 0;
+      }
+      .tab-panel {
+        display: none !important;
+      }
+      .tab-panel.print-target {
+        display: block !important;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <h1>Vaccine Eligibility Tool</h1>
-    <div class="subtitle">
-      Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td (Adacel), HPV (Gardasil 9).
-    </div>
-
-    <div class="layout">
-      <!-- LEFT: INPUT -->
-      <div class="card">
-        <h2>Patient information</h2>
-        <form id="eligibility-form">
-          <label for="age">Age (years)</label>
-          <input type="number" id="age" name="age" min="0" max="120" placeholder="e.g., 72" required>
-
-          <label for="sex">Sex at birth</label>
-          <select id="sex" name="sex">
-            <option value="unspecified">Select...</option>
-            <option value="female">Female</option>
-            <option value="male">Male</option>
-            <option value="other">Other / not listed</option>
-          </select>
-
-          <label class="checkbox-item" style="margin-top: 4px; margin-bottom: 8px;">
-            <input type="checkbox" id="pregnantWindow" value="pregnantWindow">
-            Pregnant in weeks 32–36
-          </label>
-
-          <label>Medical / risk factors (simplified)</label>
-          <div class="checkbox-group">
-            <label class="checkbox-item">
-              <input type="checkbox" value="immunocompromised">
-              Immunocompromised
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="diabetes">
-              Diabetes
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="ckd">
-              CKD / dialysis
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="chronic-heart">
-              Chronic heart disease
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="chronic-lung">
-              Chronic lung disease (e.g., COPD, asthma)
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="liver">
-              Chronic liver disease
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="asplenia">
-              Asplenia / hyposplenia
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="ltc">
-              Long-term care / retirement home
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="indigenous">
-              Indigenous
-            </label>
-            <label class="checkbox-item">
-              <input type="checkbox" value="smoker">
-              Current smoker
-            </label>
+  <div class="page-shell">
+    <div class="app-card">
+      <div class="header-row">
+        <div class="title-stack">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h1>Vaccine Eligibility Tool</h1>
+            <span class="title-pill">Preliminary</span>
           </div>
-
-          <div class="btn-row">
-            <button type="submit">Check vaccines</button>
-            <button type="button" class="secondary" id="reset-btn">Reset</button>
+          <p>Quickly triage adult vaccine needs, then drill into NACI indication, recommendation, and Ontario coverage.</p>
+        </div>
+        <div class="badge-row">
+          <div class="chip">
+            <span class="chip-dot"></span>
+            NACI-aligned logic (adult focus)
           </div>
-
-          <div class="disclaimer">
-            This tool does not store any data. Vaccine decisions should be confirmed with current NACI guidance,
-            the Canadian Immunization Guide, provincial schedules, and product monographs.
+          <div class="chip">
+            🧾 Per-vaccine indication / coverage
           </div>
-        </form>
+          <div class="chip">
+            🖨 Separate print views by tab
+          </div>
+        </div>
       </div>
 
-      <!-- RIGHT: OUTPUT -->
-      <div class="card">
-        <div class="section-title">
-          <h2>Recommendations</h2>
-          <span id="summary-badge"></span>
-        </div>
+      <div class="layout">
+        <!-- LEFT: PATIENT INPUT -->
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="panel-header">
+              <div>
+                <div class="panel-kicker">Patient Profile</div>
+                <p class="panel-subtitle">Enter the basics + risk factors (adult-focused; Ontario coverage assumptions).</p>
+              </div>
+              <button type="button" class="button-ghost" id="reset-form-btn">
+                <span class="icon">↺</span> Reset
+              </button>
+            </div>
 
-        <div class="tab-row">
-          <button type="button" class="tab-button active" id="tab-quick">Quick summary</button>
-          <button type="button" class="tab-button" id="tab-detailed">Detailed view</button>
-        </div>
+            <form id="eligibility-form">
+              <div class="form-grid">
+                <div class="field-row">
+                  <div class="field">
+                    <label for="age">Age<span class="required-dot">*</span></label>
+                    <input type="number" id="age" min="0" max="120" placeholder="e.g., 68" required />
+                    <div class="helper-text">Tool is optimized for adults (≥18 years).</div>
+                  </div>
+                  <div class="field">
+                    <label for="province">Province (for coverage)</label>
+                    <select id="province">
+                      <option value="ON" selected>Ontario</option>
+                      <option value="Other">Other / Unknown</option>
+                    </select>
+                    <div class="helper-text">Coverage logic currently tuned to Ontario public programs.</div>
+                  </div>
+                </div>
 
-        <div class="top-actions">
-          <button type="button" id="print-btn" disabled>Print quick summary</button>
-        </div>
+                <div class="field">
+                  <label>Key risk factors (simplified)</label>
+                  <div class="checkbox-cluster">
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="highRiskMedical" />
+                      <span>Chronic cardiac, pulmonary, renal, hepatic, metabolic disease, or other high-risk medical conditions.</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="immunocompromised" />
+                      <span>Immunocompromised / immunosuppressed (disease or therapy).</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="ltcResident" />
+                      <span>Lives in nursing home / other chronic care facility.</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="pregnant" />
+                      <span>Pregnant (or will be in late pregnancy during RSV / flu season).</span>
+                    </label>
+                  </div>
+                  <div class="helper-text">
+                    These toggles drive higher-risk logic for pneumococcal, RSV, shingles, flu, and COVID-19.
+                  </div>
+                </div>
 
-        <div id="quick-summary"></div>
+                <div class="field">
+                  <label>Sexual health / HPV considerations (optional)</label>
+                  <div class="checkbox-cluster">
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="hpvHighRisk" />
+                      <span>High-risk sexual exposure (multiple partners, MSM, etc.).</span>
+                    </label>
+                    <label class="checkbox-row">
+                      <input type="checkbox" id="hpvIncompleteSeries" />
+                      <span>HPV series incomplete or unknown, ≤26 years old.</span>
+                    </label>
+                  </div>
+                  <div class="helper-text">
+                    HPV logic assumes NACI catch-up focus to ~26 years; some adults up to 45 may still benefit.
+                  </div>
+                </div>
+              </div>
 
-        <div id="detailed-results" class="hidden">
-          <div class="section-tagline" style="margin-bottom:6px;">
-            Vaccines are listed in priority order: Prevnar / Shingrix / RSV → Flu / COVID → HPV / Tdap.
-            Funding category is shown on each card.
+              <div class="actions-row">
+                <button type="submit" class="button-primary">
+                  <span class="icon">⚙️</span>
+                  <span>Get Results</span>
+                </button>
+                <button type="button" class="button-ghost" id="clear-results-btn">
+                  <span class="icon">🧹</span>
+                  Clear results only
+                </button>
+              </div>
+            </form>
           </div>
-          <div id="results-detailed"></div>
         </div>
 
-        <p class="disclaimer">
-          Categories:
-          <br>• <strong>Publicly funded – pharmacy:</strong> funded and typically available in community pharmacies.
-          <br>• <strong>Publicly funded – MD/public health:</strong> part of provincial programs, usually not billed through pharmacy.
-          <br>• <strong>Private-pay:</strong> patient usually pays; some plans may reimburse.
-          <br><br>
-          NACI quotes are shortened excerpts – refer to the Canadian Immunization Guide and NACI statements for full details.
-        </p>
+        <!-- RIGHT: RESULTS -->
+        <div class="panel">
+          <div class="panel-inner">
+            <div class="panel-header">
+              <div>
+                <div class="panel-kicker">Results</div>
+                <p class="panel-subtitle">
+                  Quick triage, detailed counselling notes, and a dedicated
+                  <strong>Indication &amp; Coverage</strong> view per vaccine.
+                </p>
+              </div>
+              <div class="tab-bar" id="tab-bar">
+                <button class="tab-button active" data-tab="quick-summary">
+                  <span class="dot"></span>
+                  Quick
+                </button>
+                <button class="tab-button" data-tab="detailed-summary">
+                  <span class="dot"></span>
+                  Detailed
+                </button>
+                <button class="tab-button" data-tab="indication-coverage">
+                  <span class="dot"></span>
+                  Indication &amp; Coverage
+                </button>
+              </div>
+            </div>
+
+            <div class="print-row">
+              <button type="button" class="print-button" data-print-tab="quick-summary">
+                <span class="icon">🖨</span> Print Quick
+              </button>
+              <button type="button" class="print-button" data-print-tab="detailed-summary">
+                <span class="icon">🖨</span> Print Detailed
+              </button>
+              <button type="button" class="print-button" data-print-tab="indication-coverage">
+                <span class="icon">🖨</span> Print Indication / Coverage
+              </button>
+            </div>
+
+            <div class="results-shell">
+              <div class="results-meta" id="results-meta">
+                <span>Waiting for input…</span>
+                <span></span>
+              </div>
+              <div class="results-scroll">
+                <div id="quick-summary" class="tab-panel active">
+                  <div class="pill-row">
+                    <div class="pill">
+                      <span class="dot"></span>
+                      Prioritized: Prevnar / Shingrix / RSV → Flu / COVID → HPV / Tdap
+                    </div>
+                    <div class="pill">
+                      ℹ️ Summary shows only vaccines
+                      <strong>recommended today</strong>.
+                    </div>
+                  </div>
+                  <div id="quick-summary-content" class="tab-body"></div>
+                </div>
+
+                <div id="detailed-summary" class="tab-panel">
+                  <div class="pill-row">
+                    <div class="pill">
+                      <span class="dot"></span>
+                      Detailed counselling notes by vaccine.
+                    </div>
+                    <div class="pill">
+                      No duplicate entries for public vs private funding.
+                    </div>
+                  </div>
+                  <div id="detailed-summary-content" class="tab-body"></div>
+                </div>
+
+                <div id="indication-coverage" class="tab-panel">
+                  <p class="helper-text" style="margin-bottom:6px;">
+                    This view separates:
+                    <strong>indication</strong> (who the vaccine is for),
+                    <strong>recommendation</strong> (NACI strength for this patient),
+                    and <strong>coverage</strong> (Ontario public vs private pay).
+                  </p>
+                  <div id="indication-coverage-content" class="tab-body"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ref" style="margin-top:8px;">
+              NACI sources include: Canadian Immunization Guide chapters (pneumococcal, herpes zoster, RSV, influenza) and recent
+              statements (seasonal influenza, adult pneumococcal, zoster, RSV). Always verify against the latest guidance and
+              local Ontario program bulletins before making funding decisions.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- References card -->
-    <div class="card">
-      <h2>Key references</h2>
-      <ul class="disclaimer">
-        <li>Canadian Immunization Guide – chapters on Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, and Immunization of Adults.</li>
-        <li>NACI statements and updates on seasonal influenza vaccines, COVID-19 vaccines, pneumococcal vaccines (PCV20), zoster vaccines (RZV), RSV vaccines, and HPV vaccines.</li>
-        <li>Ontario Ministry of Health – publicly funded immunization schedules and program policy (e.g., Shingrix 65–70, HPV school program, RSV and pneumococcal programs).</li>
-        <li>NAPRA National Drug Schedules – classification of vaccines as Schedule II and province-specific adaptations (e.g., PCV20, RSV, HPV, zoster, Tdap).</li>
-      </ul>
-    </div>
-
-    <footer>
-      Created by Ali Al-Dirawi
-    </footer>
   </div>
 
-  <!-- PRINTABLE SUMMARY AREA -->
-  <div id="print-area"></div>
-
   <script>
-    // ---------- Constants ------------------------------------------------
+    // --- Data model + NACI-aligned logic (simplified, adult-focused) ---
 
-    const RISK_LABELS = {
-      'immunocompromised': 'Immunocompromised',
-      'diabetes': 'Diabetes',
-      'ckd': 'Chronic kidney disease / dialysis',
-      'chronic-heart': 'Chronic heart disease',
-      'chronic-lung': 'Chronic lung disease (e.g., COPD, asthma)',
-      'liver': 'Chronic liver disease',
-      'asplenia': 'Asplenia / hyposplenia',
-      'ltc': 'Long-term care / retirement home',
-      'indigenous': 'Indigenous',
-      'smoker': 'Current smoker'
-    };
-
-    // Prices (per dose) for private-pay vaccines at this pharmacy
-    const PRICE_PREVNAR20 = 145;
-    const PRICE_SHINGRIX = 205;
-    const PRICE_ABRYSVO = 290;
-    const PRICE_GARDASIL9 = 225;
-    const PRICE_ADACEL = 70; // saved for future use if needed
-
-    // Priority ordering: lower = higher priority
-    const PRIORITY_ORDER = {
-      'pcv20': 1,
-      'pcv20-private': 1,
-      'shingrix-public': 1,
-      'shingrix-private': 1,
-      'rsv-public': 1,
-      'rsv-private': 1,
-      'rsv-preg': 1,
-      'influenza': 2,
-      'covid': 2,
-      'tdap': 3,
-      'hpv-public': 3,
-      'hpv-private': 3
-    };
-
-    function getPriority(v) {
-      return PRIORITY_ORDER[v.id] !== undefined ? PRIORITY_ORDER[v.id] : 99;
-    }
-
-    // For quick summary grouping
-    const QUICK_GROUPS = [
-      { key: 'pcv20', label: 'Prevnar 20 (PCV20)', matchIds: ['pcv20', 'pcv20-private'] },
-      { key: 'shingrix', label: 'Shingrix (RZV)', matchIds: ['shingrix-public', 'shingrix-private'] },
-      { key: 'rsv', label: 'RSV vaccine – Abrysvo', matchIds: ['rsv-public', 'rsv-private', 'rsv-preg'] },
-      { key: 'influenza', label: 'Influenza', matchIds: ['influenza'] },
-      { key: 'covid', label: 'COVID-19', matchIds: ['covid'] },
-      { key: 'hpv', label: 'HPV (Gardasil 9)', matchIds: ['hpv-public', 'hpv-private'] },
-      { key: 'tdap', label: 'Tdap/Td (Adacel)', matchIds: ['tdap'] }
-    ];
-
-    let lastProfile = null;
-    let lastVaccines = [];
-
-    // ---------- Helpers -------------------------------------------------
-
-    function getPatientProfile() {
-      const age = parseInt(document.getElementById('age').value, 10);
-      const sex = document.getElementById('sex').value;
-      const pregnantWindow = document.getElementById('pregnantWindow').checked;
-
-      const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
-      const risks = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) risks.push(cb.value);
-      });
-
-      return { age, sex, pregnantWindow, risks };
-    }
-
-    function hasRisk(profile, key) {
-      return profile.risks.includes(key);
-    }
-
-    function isHighRiskAdult(profile) {
-      return hasRisk(profile, 'chronic-heart') ||
-             hasRisk(profile, 'chronic-lung') ||
-             hasRisk(profile, 'diabetes') ||
-             hasRisk(profile, 'ckd') ||
-             hasRisk(profile, 'liver') ||
-             hasRisk(profile, 'asplenia') ||
-             hasRisk(profile, 'immunocompromised') ||
-             hasRisk(profile, 'ltc');
-    }
-
-    function uniqueVaccines(vList) {
-      const seen = new Set();
-      const unique = [];
-      vList.forEach(v => {
-        if (!seen.has(v.id)) {
-          seen.add(v.id);
-          unique.push(v);
-        }
-      });
-      return unique;
-    }
-
-    // Collapse public vs private so each vaccine appears only once
-    function collapsePublicPrivate(vaxList) {
-      let filtered = [...vaxList];
-
-      QUICK_GROUPS.forEach(group => {
-        // Is there any public / pharmacy-funded version in this group?
-        const hasPublic = filtered.some(
-          v =>
-            group.matchIds.includes(v.id) &&
-            (v.category === 'pharmacy-funded' || v.category === 'public-nonpharmacy')
-        );
-
-        // If public exists, remove private entries for this group
-        if (hasPublic) {
-          filtered = filtered.filter(
-            v => !(group.matchIds.includes(v.id) && v.category === 'private')
+    const vaccines = [
+      {
+        id: "pcv20",
+        name: "Pneumococcal (PCV20 – Prevnar 20)",
+        group: 1, // ordering: 1 = Prevnar/Shingrix/RSV
+        naciRef:
+          "NACI / Canadian Immunization Guide – Pneumococcal Vaccine chapter; adult summary.",
+        isIndicated(patient) {
+          return patient.age >= 18;
+        },
+        isRecommended(patient) {
+          return patient.age >= 65 || (patient.age >= 18 && patient.highRiskMedical);
+        },
+        indicationText(patient) {
+          return (
+            "Indicated for adults 18 years and older to prevent invasive pneumococcal disease; " +
+            "programs focus on ≥65 years and adults 18–64 with high-risk conditions."
+          );
+        },
+        recommendationText(patient) {
+          if (patient.age >= 65) {
+            return "Strongly recommended: adult ≥65 years (program-wide recommendation).";
+          }
+          if (patient.age >= 18 && patient.highRiskMedical) {
+            return "Recommended: adult 18–64 with high-risk medical conditions (e.g., chronic heart/lung disease, CKD, etc.).";
+          }
+          if (patient.age >= 18) {
+            return "Not routinely recommended for healthy adult <65 without specific risk factors; consider shared decision-making.";
+          }
+          return "Primarily an adult-focused recommendation; refer to pediatric guidance if applicable.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          const eligibleProgram = patient.age >= 65 || (patient.age >= 18 && patient.highRiskMedical);
+          if (inON && eligibleProgram) {
+            return {
+              type: "public",
+              text:
+                "Likely publicly funded in Ontario for this patient (adult ≥65 or 18–64 with qualifying high-risk condition), " +
+                "subject to local vaccine program details and formularies."
+            };
+          }
+          if (inON) {
+            return {
+              type: "private",
+              text:
+                "Not routinely publicly funded in Ontario for a healthy adult <65 without high-risk conditions; usually private pay/out-of-pocket."
+            };
+          }
+          return {
+            type: "unknown",
+            text:
+              "Coverage depends on local provincial/territorial program; often publicly funded for ≥65 and selected high-risk adults, otherwise private pay."
+          };
+        },
+        quickSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return "Recommended pneumococcal conjugate dose (PCV20) based on age/risk; ideally given once and documented.";
+          }
+          return "Not routinely required today for this patient; consider later if they age into program or develop risk factors.";
+        },
+        detailedSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return (
+              "Offer a single dose of PCV20 to protect against invasive pneumococcal disease. " +
+              "Administer IM and ensure spacing from any previous polysaccharide doses is appropriate. " +
+              "Document product, lot, and site, and counsel on common local reactions (pain, redness, mild systemic symptoms)."
+            );
+          }
+          return (
+            "PCV20 is licensed for adults 18+, but routine use is targeted to ≥65 years and high-risk adults. " +
+            "For a healthy adult <65 with no major comorbidities, routine immunization is generally not required; " +
+            "reassess if they become eligible through age or new high-risk conditions."
           );
         }
+      },
+      {
+        id: "shingrix",
+        name: "Herpes Zoster (RZV – Shingrix)",
+        group: 1,
+        naciRef:
+          "NACI updated recommendations on herpes zoster vaccination (recombinant zoster vaccine).",
+        isIndicated(patient) {
+          return patient.age >= 50 || (patient.age >= 18 && patient.immunocompromised);
+        },
+        isRecommended(patient) {
+          return patient.age >= 50 || (patient.age >= 18 && patient.immunocompromised);
+        },
+        indicationText(patient) {
+          return (
+            "Indicated for adults ≥50 years and adults ≥18 years at increased risk of herpes zoster due to immunodeficiency or immunosuppression."
+          );
+        },
+        recommendationText(patient) {
+          if (patient.age >= 50) {
+            return "Strongly recommended: 2-dose RZV series for adults ≥50 years (even if they had shingles or prior live zoster vaccine).";
+          }
+          if (patient.age >= 18 && patient.immunocompromised) {
+            return "Recommended: 2-dose RZV series for immunocompromised adults ≥18 years at increased risk of herpes zoster.";
+          }
+          return "Not routinely recommended in this age/risk group.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (inON && patient.age >= 65 && patient.age <= 70) {
+            return {
+              type: "public",
+              text:
+                "Publicly funded in Ontario for adults 65–70 years (2-dose series), subject to current provincial program criteria."
+            };
+          }
+          if (inON) {
+            return {
+              type: "private",
+              text:
+                "Outside the 65–70-year funded cohort, Shingrix is usually private pay/out-of-pocket, though some patients may have third-party coverage."
+            };
+          }
+          return {
+            type: "unknown",
+            text:
+              "Coverage varies by jurisdiction; many provinces publicly fund for selected older adults, while others require private/third-party payment."
+          };
+        },
+        quickSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return "Recommend a 2-dose Shingrix series, separated by 2–6 months, to reduce shingles and post-herpetic neuralgia risk.";
+          }
+          return "Shingles vaccine is not routinely required in this age/risk group today; reassess as the patient ages or if risk changes.";
+        },
+        detailedSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return (
+              "Provide recombinant zoster vaccine (Shingrix) as a 2-dose series (0 and 2–6 months). " +
+              "Counsel about local injection-site reactions and systemic symptoms (fever, myalgias) that typically resolve within 2–3 days. " +
+              "Document immunization status, schedule the second dose, and review that vaccination reduces both shingles incidence and post-herpetic neuralgia."
+            );
+          }
+          return (
+            "RZV is indicated mainly for adults ≥50 and immunocompromised adults ≥18. " +
+            "In younger, immunocompetent adults without major risk factors, routine zoster vaccination is not necessary at this time."
+          );
+        }
+      },
+      {
+        id: "rsv",
+        name: "RSV (Arexvy / Abrysvo / other adult RSV vaccines)",
+        group: 1,
+        naciRef:
+          "NACI guidance on RSV vaccines for older adults; Canadian Immunization Guide RSV content.",
+        isIndicated(patient) {
+          return patient.age >= 60 || (patient.age >= 50 && patient.highRiskMedical);
+        },
+        isRecommended(patient) {
+          return (
+            patient.age >= 75 ||
+            (patient.age >= 60 && (patient.highRiskMedical || patient.ltcResident))
+          );
+        },
+        indicationText(patient) {
+          return (
+            "Indicated for older adults (typically ≥60 years), and some high-risk adults 50–59 years depending on product and jurisdiction."
+          );
+        },
+        recommendationText(patient) {
+          if (patient.age >= 75) {
+            return "Strongly recommended: adults ≥75 years, especially with chronic conditions, when vaccine is available.";
+          }
+          if (patient.age >= 60 && (patient.highRiskMedical || patient.ltcResident)) {
+            return "Recommended: adults ≥60 with significant chronic conditions or living in long-term care/chronic care settings.";
+          }
+          if (patient.age >= 60) {
+            return "May be considered on a case-by-case basis for adults 60–74 after discussion of risks, benefits, and local epidemiology.";
+          }
+          if (patient.age >= 50 && patient.highRiskMedical) {
+            return "May be considered for some high-risk 50–59-year-olds if product and program criteria support it.";
+          }
+          return "Not routinely recommended in this age group.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (
+            inON &&
+            ((patient.age >= 75) ||
+              (patient.age >= 60 && patient.ltcResident))
+          ) {
+            return {
+              type: "public",
+              text:
+                "Ontario’s high-risk RSV program focuses on adults ≥75 and high-risk or long-term care residents ≥60; " +
+                "this patient likely qualifies for a publicly funded dose if other clinical criteria are met."
+            };
+          }
+          if (inON) {
+            return {
+              type: "private",
+              text:
+                "Outside high-risk older adult groups, RSV vaccine is usually private pay or not routinely offered; " +
+                "check current Ontario program bulletins for exact eligibility."
+            };
+          }
+          return {
+            type: "unknown",
+            text:
+              "Coverage is jurisdiction-dependent; many programs target the oldest and highest-risk adults, with others paying privately."
+          };
+        },
+        quickSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return "Recommend an RSV vaccine dose this season due to age and/or high-risk status to reduce RSV-associated lower respiratory tract disease.";
+          }
+          if (this.isIndicated(patient)) {
+            return "Eligible for RSV vaccination; consider shared decision-making based on age, comorbidities, and local program/funding.";
+          }
+          return "RSV vaccination is not routinely indicated at this time based on current age/risk inputs.";
+        },
+        detailedSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return (
+              "Discuss RSV vaccination as a one-time dose (product-specific) to reduce severe RSV outcomes. " +
+              "Prioritize adults ≥75 and those ≥60 in long-term care or with significant chronic conditions. " +
+              "Counsel on expected local/systemic reactions and coordinate timing with other seasonal vaccines if appropriate."
+            );
+          }
+          return (
+            "RSV vaccines are primarily aimed at older and high-risk adults. " +
+            "For this patient, focus on influenza and COVID-19 vaccination first; RSV vaccination may still be considered in future years as they age or if risk profile changes."
+          );
+        }
+      },
+      {
+        id: "flu",
+        name: "Seasonal Influenza",
+        group: 2, // Flu / COVID
+        naciRef:
+          "NACI Statement on Seasonal Influenza Vaccine; Canadian Immunization Guide – Influenza chapter.",
+        isIndicated(patient) {
+          return patient.age >= 0.5;
+        },
+        isRecommended(patient) {
+          return patient.age >= 0.5;
+        },
+        indicationText(patient) {
+          return "Indicated for almost everyone ≥6 months of age; annual vaccination is the norm in Canada.";
+        },
+        recommendationText(patient) {
+          if (patient.age >= 65) {
+            return "Strongly recommended annually; older adults should preferentially receive high-dose, adjuvanted, or recombinant products when available.";
+          }
+          if (patient.highRiskMedical || patient.pregnant) {
+            return "Strongly recommended annually for patients with chronic conditions and those who are pregnant.";
+          }
+          return "Recommended annually for all individuals ≥6 months; focus on timing before or early in flu season.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (inON) {
+            return {
+              type: "public",
+              text:
+                "Universal publicly funded program in Ontario for individuals ≥6 months; product choice (e.g., high-dose) may depend on age and risk."
+            };
+          }
+          return {
+            type: "public",
+            text:
+              "Most Canadian jurisdictions fund seasonal influenza vaccine for all (or nearly all) residents; confirm details locally."
+          };
+        },
+        quickSummary(patient) {
+          return "Recommend an age-appropriate influenza vaccine this season (can be co-administered with other inactivated vaccines).";
+        },
+        detailedSummary(patient) {
+          return (
+            "Offer an age-appropriate, inactivated or recombinant influenza vaccine annually before or during the flu season. " +
+            "Adults ≥65 often benefit from high-dose, adjuvanted, or recombinant formulations when available. " +
+            "Counsel on common local and systemic reactions and reinforce annual vaccination due to antigenic drift."
+          );
+        }
+      },
+      {
+        id: "covid",
+        name: "COVID-19 (updated formulation)",
+        group: 2,
+        naciRef:
+          "NACI COVID-19 vaccine statements – updated monovalent formulations recommended seasonally.",
+        isIndicated(patient) {
+          return patient.age >= 6;
+        },
+        isRecommended(patient) {
+          return patient.age >= 18;
+        },
+        indicationText(patient) {
+          return "Indicated for most individuals ≥6 months, with updated formulations recommended seasonally.";
+        },
+        recommendationText(patient) {
+          if (patient.age >= 65 || patient.highRiskMedical || patient.immunocompromised) {
+            return "Strongly recommended to receive the current season’s updated COVID-19 vaccine dose.";
+          }
+          if (patient.age >= 18) {
+            return "Recommended to receive at least the current season’s updated dose, especially if not vaccinated recently.";
+          }
+          return "For children/adolescents, follow age-specific NACI schedules and local guidance.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (inON) {
+            return {
+              type: "public",
+              text:
+                "COVID-19 vaccines are publicly funded in Ontario for eligible age and risk groups; updated products are typically available seasonally without out-of-pocket cost."
+            };
+          }
+          return {
+            type: "public",
+            text:
+              "In most Canadian jurisdictions, COVID-19 vaccination is publicly funded; confirm current eligibility where the patient lives."
+          };
+        },
+        quickSummary(patient) {
+          return "Recommend the current season’s updated COVID-19 vaccine dose, especially if last dose was ≥6–12 months ago or the patient is high risk.";
+        },
+        detailedSummary(patient) {
+          return (
+            "Review prior COVID-19 doses and infection history, then offer an updated monovalent product according to the latest NACI schedule. " +
+            "Counsel about local/systemic reactions and reinforce that vaccination reduces severe disease, hospitalization, and death."
+          );
+        }
+      },
+      {
+        id: "hpv",
+        name: "HPV (Gardasil 9 or equivalent)",
+        group: 3, // HPV / Tdap
+        naciRef:
+          "NACI HPV vaccine statements; Canadian Immunization Guide – HPV chapter.",
+        isIndicated(patient) {
+          return patient.age >= 9 && patient.age <= 45;
+        },
+        isRecommended(patient) {
+          return (
+            (patient.age >= 9 && patient.age <= 26) ||
+            (patient.age <= 45 && patient.hpvHighRisk)
+          );
+        },
+        indicationText(patient) {
+          return (
+            "Indicated from age 9; strongest evidence and public programs target adolescents and young adults, " +
+            "with catch-up typically up to about 26 years and selective use up to 45 years."
+          );
+        },
+        recommendationText(patient) {
+          if (patient.age >= 9 && patient.age <= 26) {
+            return "Recommended as a 2- or 3-dose series for adolescents and young adults up to about 26 years (dose schedule depends on age at start).";
+          }
+          if (patient.age <= 45 && patient.hpvHighRisk) {
+            return "May be considered up to age 45 in individuals with high-risk sexual exposure after shared decision-making.";
+          }
+          return "Not routinely recommended at this age without specific high-risk indications.";
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (inON && patient.age >= 9 && patient.age <= 18) {
+            return {
+              type: "public",
+              text:
+                "Likely publicly funded via Ontario school-based or catch-up programs for eligible adolescents; confirm exact grade/age criteria."
+            };
+          }
+          if (inON && patient.age <= 26 && patient.hpvIncompleteSeries) {
+            return {
+              type: "mixed",
+              text:
+                "Some catch-up opportunities may be publicly funded; otherwise, doses are usually private pay/third-party. Check Ontario program details."
+            };
+          }
+          return {
+            type: "private",
+            text:
+              "In adult pharmacy practice, HPV vaccination is often private pay (or covered by private insurance), especially beyond standard school program ages."
+          };
+        },
+        quickSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return "Consider (or complete) an HPV vaccine series, especially given age and/or high-risk sexual exposure.";
+          }
+          return "HPV vaccine is typically given earlier in life; may not be routinely required at this age unless there are specific high-risk indications.";
+        },
+        detailedSummary(patient) {
+          if (this.isRecommended(patient)) {
+            return (
+              "HPV vaccination reduces risk of HPV-related cancers and genital warts. " +
+              "Offer or complete the vaccine series based on age at initiation (2-dose vs 3-dose schedule). " +
+              "Review previous HPV doses, sexual health risks, and public vs private coverage options."
+            );
+          }
+          return (
+            "HPV vaccine is ideally given in adolescence. " +
+            "For older adults without major risk factors, the incremental benefit is smaller; discuss case-by-case if the patient is particularly concerned or at higher risk."
+          );
+        }
+      },
+      {
+        id: "tdap",
+        name: "Tdap / Td (Tetanus, Diphtheria, Pertussis)",
+        group: 3,
+        naciRef:
+          "NACI tetanus, diphtheria, and pertussis recommendations; Canadian Immunization Guide.",
+        isIndicated(patient) {
+          return patient.age >= 18;
+        },
+        isRecommended(patient) {
+          return patient.age >= 18;
+        },
+        indicationText(patient) {
+          return (
+            "All adults should receive at least one dose of Tdap, then Td boosters every 10 years; " +
+            "pregnant individuals should receive Tdap in every pregnancy (usually in late 2nd or 3rd trimester)."
+          );
+        },
+        recommendationText(patient) {
+          if (patient.pregnant) {
+            return "Recommended Tdap in each pregnancy (preferably between 27–32 weeks) to protect the newborn from pertussis.";
+          }
+          return (
+            "Ensure at least one adult Tdap dose, then Td boosters every 10 years. " +
+            "If history is unknown or last dose ≥10 years ago, a booster is recommended."
+          );
+        },
+        coverage(patient) {
+          const inON = patient.province === "ON";
+          if (inON) {
+            return {
+              type: "public",
+              text:
+                "Tetanus/diphtheria/pertussis vaccines are part of publicly funded immunization in Ontario; " +
+                "administration site (physician/public health vs pharmacy) may influence billing, not patient funding."
+            };
+          }
+          return {
+            type: "public",
+            text:
+              "In most jurisdictions, Tdap/Td vaccines are publicly funded as part of the routine immunization schedule; verify local delivery models."
+          };
+        },
+        quickSummary(patient) {
+          return (
+            "Confirm when the last tetanus/pertussis booster was given. " +
+            "If ≥10 years ago or unknown, a Tdap/Td booster is recommended; in pregnancy, give Tdap in each pregnancy."
+          );
+        },
+        detailedSummary(patient) {
+          return (
+            "Review immunization history. If the patient never received Tdap as an adult, give a Tdap dose now, then Td boosters every 10 years. " +
+            "In pregnancy, administer Tdap in each pregnancy (preferably at 27–32 weeks) to optimize passive protection for the infant. " +
+            "Counsel on local injection-site reactions and document dosing history."
+          );
+        }
+      }
+    ];
+
+    function getPatientFromForm() {
+      const age = parseInt(document.getElementById("age").value, 10) || 0;
+      const province = document.getElementById("province").value;
+      const highRiskMedical = document.getElementById("highRiskMedical").checked;
+      const immunocompromised = document.getElementById("immunocompromised").checked;
+      const ltcResident = document.getElementById("ltcResident").checked;
+      const pregnant = document.getElementById("pregnant").checked;
+      const hpvHighRisk = document.getElementById("hpvHighRisk").checked;
+      const hpvIncompleteSeries = document.getElementById("hpvIncompleteSeries").checked;
+
+      return {
+        age,
+        province,
+        highRiskMedical,
+        immunocompromised,
+        ltcResident,
+        pregnant,
+        hpvHighRisk,
+        hpvIncompleteSeries
+      };
+    }
+
+    function evaluateVaccines(patient) {
+      const evaluated = [];
+
+      vaccines.forEach((v) => {
+        const indicated = v.isIndicated(patient);
+        const recommended = v.isRecommended(patient);
+        const coverage = v.coverage(patient);
+
+        if (indicated || recommended) {
+          evaluated.push({
+            id: v.id,
+            name: v.name,
+            group: v.group,
+            indicated,
+            recommended,
+            indicationText: v.indicationText(patient),
+            recommendationText: v.recommendationText(patient),
+            coverageType: coverage.type,
+            coverageText: coverage.text,
+            naciRef: v.naciRef,
+            quickSummary: v.quickSummary(patient),
+            detailedSummary: v.detailedSummary(patient)
+          });
+        }
       });
 
-      return filtered;
+      evaluated.sort((a, b) => {
+        if (a.group !== b.group) return a.group - b.group;
+        return a.name.localeCompare(b.name);
+      });
+
+      return evaluated;
     }
 
-    // ---------- Core logic: vaccines ----------------------------------
-
-    function evaluateVaccines(profile) {
-      const vax = [];
-      const age = profile.age;
-
-      if (Number.isNaN(age) || age < 0) return vax;
-
-      const isAdult = age >= 18;
-      const is60plus = age >= 60;
-      const is65plus = age >= 65;
-      const is75plus = age >= 75;
-      const highRisk = isHighRiskAdult(profile);
-      const pregnantWindow = profile.pregnantWindow;
-
-      // 1. Influenza
-      if (age >= 2) {
-        vax.push({
-          id: 'influenza',
-          name: 'Influenza (inactivated seasonal)',
-          category: 'pharmacy-funded',
-          funding: 'Publicly funded in Ontario pharmacies each influenza season.',
-          reason: 'Annual influenza vaccine is recommended for everyone ≥6 months; adults, especially ≥65 or with chronic conditions, are priority groups.',
-          schedule: '1 IM dose every influenza season; consider high-dose or adjuvanted options in adults ≥65 per local guidance.',
-          napraSchedule: 'Schedule II – vaccine in national routine programs.',
-          rxInfo: 'Prescription generally not required for pharmacist administration; pharmacist assessment needed.',
-          naciQuote: '“Influenza vaccine should be offered annually to anyone 6 months of age and older who does not have a contraindication.”',
-          naciRef: 'NACI Statement on Seasonal Influenza Vaccine 2025–2026',
-          notes: '',
-          pharmacistCanInject: true,
-          approxPrice: null
-        });
-      }
-
-      // 2. COVID-19 (updated formulations, adults)
-      if (age >= 18) {
-        let reason = 'Annual updated COVID-19 vaccine is recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
-        if (is65plus || highRisk) {
-          reason += ' This patient meets higher-risk criteria (age ≥65 and/or chronic disease).';
-        }
-        vax.push({
-          id: 'covid',
-          name: 'COVID-19 (updated formulation)',
-          category: 'pharmacy-funded',
-          funding: 'Publicly funded in Ontario pharmacies under the seasonal COVID-19 program.',
-          reason,
-          schedule: 'Generally 1 dose per season with ≥6 months from previous dose; follow current NACI/Ontario guidance for exact interval and extra doses in very high-risk groups.',
-          napraSchedule: 'Schedule II – vaccine in national immunization programs.',
-          rxInfo: 'Prescription usually not required for pharmacist administration; pharmacist assessment needed.',
-          naciQuote: '“NACI recommends that all individuals 6 months of age and older should receive a COVID-19 vaccine dose every year, with additional doses for some high-risk groups.”',
-          naciRef: 'NACI COVID-19 seasonal guidance',
-          notes: '',
-          pharmacistCanInject: true,
-          approxPrice: null
-        });
-      }
-
-      // 3. Pneumococcal – PCV20 (Prevnar 20)
-      if (isAdult) {
-        if (is65plus || highRisk) {
-          vax.push({
-            id: 'pcv20',
-            name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
-            category: 'public-nonpharmacy',
-            funding: 'Publicly funded for adults ≥65 and selected high-risk adults <65 (via physician / public health, not usually billed through pharmacy).',
-            reason: is65plus
-              ? 'Adult ≥65 – routine PCV20 dose recommended by NACI; eligible for provincial funding.'
-              : 'Adult <65 with chronic or immunocompromising condition – NACI recommends conjugate pneumococcal vaccination.',
-            schedule: '1 IM dose PCV20 for most adults; follow local guidance if prior PPSV23 or other PCV products were given.',
-            napraSchedule: 'Schedule II in some provinces – treated as a vaccine requiring pharmacist assessment.',
-            rxInfo: 'Prescription may or may not be required depending on province/insurer; confirm local policy.',
-            naciQuote: '“Pneu-C-20 vaccine is recommended for all adults 65 years of age and older.”',
-            naciRef: 'CIG – Immunization of adults / Pneumococcal chapter',
-            notes: 'Assumes Ontario-style funding (PCV20 publicly funded for 65+ and certain high-risk adults); adjust to your province as needed.',
-            pharmacistCanInject: true,
-            approxPrice: null
-          });
-        } else if (age >= 50) {
-          vax.push({
-            id: 'pcv20-private',
-            name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
-            category: 'private',
-            funding: 'Not routinely publicly funded for healthy adults <65; may be private-pay with possible third-party coverage.',
-            reason: 'Adult 50–64 without listed high-risk conditions; some may elect PCV20 for broader pneumococcal protection.',
-            schedule: 'Typically single PCV20 dose; confirm according to prior pneumococcal history and NACI guidance.',
-            napraSchedule: 'Schedule II in some jurisdictions; verify exact classification locally.',
-            rxInfo: 'Often no prescription required from a regulatory standpoint, but insurers may require a written prescription.',
-            naciQuote: '“Pneumococcal conjugate 20-valent (Pneu-C-20) vaccine is recommended for adults 65 years of age and older.”',
-            naciRef: 'CIG – Pneumococcal vaccine chapter',
-            notes: 'Healthy 50–64 year olds are not usually publicly funded but may be interested in additional protection.',
-            pharmacistCanInject: true,
-            approxPrice: PRICE_PREVNAR20
-          });
-        }
-      }
-
-      // 4. Shingrix (RZV)
-      if (age >= 18) {
-        const isImmuno = hasRisk(profile, 'immunocompromised');
-        const is50plus = age >= 50;
-
-        if (age >= 65 && age <= 70) {
-          vax.push({
-            id: 'shingrix-public',
-            name: 'Recombinant zoster vaccine (Shingrix – RZV)',
-            category: 'public-nonpharmacy',
-            funding: 'Publicly funded in Ontario for adults 65–70 years as a 2-dose series, usually via primary care / public health.',
-            reason: 'Age 65–70 – NACI recommends RZV for adults ≥50; Ontario funds a 2-dose series at 65–70.',
-            schedule: '2 IM doses, 2–6 months apart.',
-            napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
-            rxInfo: 'Schedule II vaccine, so a prescription is generally not required for pharmacist dispensing; funding is usually through MD/public health.',
-            naciQuote: '“Herpes zoster vaccines are generally recommended for adults 50 years of age and older.”',
-            naciRef: 'CIG – Herpes zoster (shingles) vaccine chapter',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: null
-          });
-        }
-
-        if (is50plus || isImmuno) {
-          const reasonParts = [];
-          if (is50plus) reasonParts.push('Adult ≥50 – routine RZV prevention of shingles and post-herpetic neuralgia.');
-          if (isImmuno) reasonParts.push('Immunocompromised adult – high risk of herpes zoster and complications.');
-          vax.push({
-            id: 'shingrix-private',
-            name: 'Recombinant zoster vaccine (Shingrix – RZV)',
-            category: 'private',
-            funding: 'Outside the 65–70 funded window and most high-risk programs, RZV is generally private-pay, though some drug plans cover it.',
-            reason: reasonParts.join(' '),
-            schedule: '2 IM doses, usually 2–6 months apart (can shorten to 1–2 months in some high-risk situations).',
-            napraSchedule: 'Schedule II – non-live recombinant zoster vaccine.',
-            rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; pharmacist assessment and documentation for insurers may be needed.',
-            naciQuote: '“NACI strongly recommends that individuals 18 years of age and older who are or will be immunocompromised should receive two doses of RZV.”',
-            naciRef: 'NACI updated recommendations on herpes zoster vaccination',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: PRICE_SHINGRIX
-          });
-        }
-      }
-
-      // 5. RSV – Abrysvo (RSVpreF)
-      if (is60plus || pregnantWindow) {
-        const isVeryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
-
-        if (isVeryHighRiskOlder) {
-          vax.push({
-            id: 'rsv-public',
-            name: 'RSV vaccine – Abrysvo (RSVpreF)',
-            category: 'public-nonpharmacy',
-            funding: 'Public RSV programs (e.g., adults ≥75 and selected high-risk 60–74, often via MD / public health). Pharmacy funding varies by province.',
-            reason: 'Older adult with high risk for severe RSV (age ≥75 and/or LTC / chronic comorbidities) – NACI and provincial programs prioritize this group.',
-            schedule: 'Single IM dose (0.5 mL) before or during RSV season; currently no routine booster schedule.',
-            napraSchedule: 'Schedule II – RSV vaccines classified as Schedule II in several jurisdictions.',
-            rxInfo: 'As a Schedule II vaccine, typically no prescription is required for pharmacist administration; confirm local rules and funding.',
-            naciQuote: '“A 0.5 mL dose of RSVpreF should be administered intramuscularly. The standard schedule for individuals 60 years of age and older is one dose.”',
-            naciRef: 'NACI updated guidance on RSV vaccines in older adults',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: null
-          });
-        } else if (is60plus) {
-          vax.push({
-            id: 'rsv-private',
-            name: 'RSV vaccine – Abrysvo (RSVpreF)',
-            category: 'private',
-            funding: 'Adults 60–74 without provincial program eligibility often access RSV vaccine as private-pay (some plans may cover).',
-            reason: 'Adult ≥60 without listed very high-risk criteria – may benefit from a single RSV dose based on shared decision-making.',
-            schedule: 'Single IM dose (0.5 mL) before / during RSV season.',
-            napraSchedule: 'Schedule II – RSV vaccines.',
-            rxInfo: 'Typically does not require a prescription for pharmacist administration, but some insurers may request one.',
-            naciQuote: '“A single 0.5 mL dose of RSVpreF (Abrysvo) is administered intramuscularly in adults 60 years of age and older.”',
-            naciRef: 'CIG – RSV vaccine chapter',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: PRICE_ABRYSVO
-          });
-        }
-
-        if (pregnantWindow) {
-          vax.push({
-            id: 'rsv-preg',
-            name: 'RSV vaccine – Abrysvo (maternal use)',
-            category: 'public-nonpharmacy',
-            funding: 'In some jurisdictions, a single dose in late pregnancy (e.g., 32–36 weeks) is publicly funded to protect the infant.',
-            reason: 'Pregnant person in weeks 32–36 – maternal RSV vaccination can protect the infant during their first RSV season.',
-            schedule: 'Single IM dose in late pregnancy; timing and eligibility are jurisdiction-specific.',
-            napraSchedule: 'Schedule II – vaccine; use in pregnancy per NACI guidance.',
-            rxInfo: 'Typically arranged via prenatal care / public health clinics rather than community pharmacies.',
-            naciQuote: 'NACI supports maternal RSV vaccination in a defined gestational window to protect infants during their first RSV season.',
-            naciRef: 'NACI RSV guidance – maternal vaccination',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: null
-          });
-        }
-      }
-
-      // 6. Tdap / Td – adult boosters (Adacel)
-      if (isAdult) {
-        vax.push({
-          id: 'tdap',
-          name: 'Tdap / Td (tetanus–diphtheria ± pertussis) – Adacel',
-          category: 'public-nonpharmacy',
-          funding: 'Td/Tdap boosters are publicly funded; in Ontario, one Tdap booster is recommended for adults ≥18, plus one each pregnancy.',
-          reason: 'All adults should receive one dose of Tdap in adulthood and tetanus/diphtheria boosters every 10 years; each pregnancy should receive Tdap.',
-          schedule: 'If not yet received in adulthood: 1 dose Tdap now, then Td/Tdap every 10 years. In pregnancy: 1 Tdap each pregnancy, ideally 27–32 weeks.',
-          napraSchedule: 'Schedule II – vaccines (tetanus, diphtheria, pertussis).',
-          rxInfo: 'As a Schedule II vaccine, a prescription is generally not required; many programs deliver doses via public health / MD offices.',
-          naciQuote: '“All adults (18 years of age and older) should receive one dose of acellular pertussis-containing vaccine (Tdap) if not previously received during adulthood.”',
-          naciRef: 'CIG – Immunization of adults / Pertussis-containing vaccines',
-          notes: '',
-          pharmacistCanInject: false, // per your instruction
-          approxPrice: null // Adacel price saved but not displayed (treated as publicly funded here)
-        });
-      }
-
-      // 7. HPV – Gardasil 9 (9vHPV)
-      if (age >= 9 && age <= 45) {
-        if (age >= 12 && age <= 17) {
-          vax.push({
-            id: 'hpv-public',
-            name: 'HPV vaccine – Gardasil 9',
-            category: 'public-nonpharmacy',
-            funding: 'Publicly funded school-based HPV program (grade 7–8 with catch-up through secondary school; usually via school clinics / public health).',
-            reason: 'Adolescent in the typical Ontario school program window – eligible for publicly funded HPV series if not already completed.',
-            schedule: 'Typically 2-dose schedule in younger adolescents (e.g., 0 and 6–12 months) or 1-dose approaches per updated NACI guidance; confirm current local schedule.',
-            napraSchedule: 'Schedule II – HPV vaccine is Schedule II in the National Drug Schedules.',
-            rxInfo: 'No prescription required as a Schedule II vaccine; school / public health programs usually deliver publicly funded doses.',
-            naciQuote: '“NACI strongly recommends HPV vaccination for all individuals 9 to 26 years of age.”',
-            naciRef: 'NACI updated recommendations on HPV vaccines',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: null
-          });
-        }
-
-        if (age >= 18) {
-          const isCore = age <= 26;
-          const ageText = isCore
-            ? 'Core NACI target group (9–26 years).'
-            : 'Age 27–45 – may receive HPV vaccine based on ongoing risk and shared decision-making.';
-          vax.push({
-            id: 'hpv-private',
-            name: 'HPV vaccine – Gardasil 9',
-            category: 'private',
-            funding: 'Typically private-pay once outside the school program; some public programs or employer plans may cover certain groups.',
-            reason: ageText,
-            schedule: 'Updated NACI guidance: 1-dose schedule for many individuals 9–20, 2-dose schedules in older groups; immunocompromised persons generally need 3 doses – check the most recent CIG / NACI table.',
-            napraSchedule: 'Schedule II – HPV vaccine.',
-            rxInfo: 'As a Schedule II vaccine, a prescription is usually not required for pharmacist administration; insurer rules may still ask for a written prescription.',
-            naciQuote: '“9vHPV vaccine is recommended for all individuals 9 to 26 years of age.”',
-            naciRef: 'CIG – HPV vaccine chapter / NACI HPV update',
-            notes: '',
-            pharmacistCanInject: true,
-            approxPrice: PRICE_GARDASIL9
-          });
-        }
-      }
-
-      return vax;
-    }
-
-    // ---------- Quick summary rendering --------------------------------
-
-    function renderQuickSummary(vaccines) {
-      const container = document.getElementById('quick-summary');
-      container.innerHTML = '';
-
-      if (!vaccines || vaccines.length === 0) {
-        container.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Adjust age or risk factors and try again.</p>';
+    function renderMeta(patient, results) {
+      const metaEl = document.getElementById("results-meta");
+      if (!patient || !results) {
+        metaEl.innerHTML = "<span>Waiting for input…</span><span></span>";
         return;
       }
 
-      const eligibleLines = [];
-      const notEligibleNames = [];
+      const recommendedCount = results.filter((r) => r.recommended).length;
 
-      QUICK_GROUPS.forEach(group => {
-        const groupVaccines = vaccines.filter(v => group.matchIds.includes(v.id));
-        if (groupVaccines.length === 0) {
-          notEligibleNames.push(group.label);
-        } else {
-          const v = groupVaccines[0];
-
-          let fundingText = '';
-          let patientCostText = '';
-          let priceText = '';
-
-          if (v.category === 'pharmacy-funded') {
-            fundingText = 'Publicly funded at pharmacy.';
-            patientCostText = '$0 (no out-of-pocket cost).';
-          } else if (v.category === 'public-nonpharmacy') {
-            fundingText = 'Publicly funded via family doctor / public health.';
-            patientCostText = '$0 (no out-of-pocket cost; not billed through pharmacy).';
-          } else if (v.category === 'private') {
-            fundingText = 'Not publicly funded for this patient (private-pay).';
-            patientCostText = 'Patient pays out-of-pocket or uses private insurance.';
+      metaEl.innerHTML = `
+        <span>
+          Age <strong>${patient.age || "?"}</strong> · Province <strong>${patient.province}</strong>
+          ${
+            patient.highRiskMedical || patient.immunocompromised || patient.ltcResident || patient.pregnant
+              ? "· High-risk flags present"
+              : ""
           }
+        </span>
+        <span>
+          <strong>${recommendedCount}</strong> vaccine${recommendedCount === 1 ? "" : "s"} recommended today
+        </span>
+      `;
+    }
 
-          if (v.category === 'private' && v.approxPrice) {
-            priceText = ` Approx. price: $${v.approxPrice} per dose.`;
-          }
-
-          let line = `<li><strong>${group.label}</strong> – ${fundingText} ${patientCostText}`;
-          if (priceText) line += ` ${priceText}`;
-          line += '</li>';
-
-          eligibleLines.push(line);
-        }
-      });
-
-      let html = '';
-      if (eligibleLines.length > 0) {
-        html += '<h3>Eligible vaccines</h3><ul>' + eligibleLines.join('') + '</ul>';
+    function renderQuickSummary(results) {
+      const container = document.getElementById("quick-summary-content");
+      if (!results.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            Enter patient details and click <strong>Get Results</strong> to see vaccine recommendations.
+          </div>
+        `;
+        return;
       }
 
-      if (notEligibleNames.length > 0) {
-        html += `<h3>Not currently recommended for this patient</h3>
-                 <p class="muted">${notEligibleNames.join(', ')}</p>`;
+      const recommended = results.filter((r) => r.recommended);
+      if (!recommended.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            No vaccines are strongly recommended today based on the limited inputs captured here. 
+            Use clinical judgment and full guidelines to reassess.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '<div class="section-title">Recommended today</div>';
+      recommended.forEach((r) => {
+        html += `
+          <div class="vaccine-block">
+            <div class="vaccine-block-header">
+              <h3>${r.name}</h3>
+              <span class="tag">Recommended</span>
+            </div>
+            <p>${r.quickSummary}</p>
+            <p class="meta">
+              Coverage: ${r.coverageText}
+            </p>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderDetailedSummary(results) {
+      const container = document.getElementById("detailed-summary-content");
+
+      if (!results.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            No vaccine logic triggered yet. Once you enter patient details and click 
+            <strong>Get Results</strong>, this view will populate with counselling-ready notes by vaccine.
+          </div>
+        `;
+        return;
+      }
+
+      let html = "";
+
+      const recommended = results.filter((r) => r.recommended);
+      const notRecommended = results.filter((r) => !r.recommended);
+
+      if (recommended.length) {
+        html += '<div class="section-title">Recommended vaccines (NACI-aligned)</div>';
+        recommended.forEach((r) => {
+          html += `
+            <div class="vaccine-block">
+              <div class="vaccine-block-header">
+                <h3>${r.name}</h3>
+                <span class="tag">Recommended</span>
+              </div>
+              <p>${r.detailedSummary}</p>
+              <p class="meta">
+                Indication: ${r.indicationText}<br/>
+                Coverage: ${r.coverageText}
+              </p>
+            </div>
+          `;
+        });
+      }
+
+      if (notRecommended.length) {
+        html += '<div class="section-title" style="margin-top:10px;">Not routinely recommended today</div>';
+        notRecommended.forEach((r) => {
+          html += `
+            <div class="vaccine-block">
+              <div class="vaccine-block-header">
+                <h3>${r.name}</h3>
+                <span class="tag tag-muted">Not routine today</span>
+              </div>
+              <p>${r.detailedSummary}</p>
+              <p class="meta">
+                Indication: ${r.indicationText}<br/>
+                Coverage (general): ${r.coverageText}
+              </p>
+            </div>
+          `;
+        });
       }
 
       container.innerHTML = html;
     }
 
-    // ---------- Detailed rendering -------------------------------------
+    function renderIndicationCoverage(results) {
+      const container = document.getElementById("indication-coverage-content");
 
-    function renderResults(vaccines) {
-      const detailedContainer = document.getElementById('results-detailed');
-      const summaryBadge = document.getElementById('summary-badge');
-      const printBtn = document.getElementById('print-btn');
-
-      // Always update quick summary
-      renderQuickSummary(vaccines);
-
-      detailedContainer.innerHTML = '';
-      summaryBadge.textContent = '';
-
-      if (!vaccines || vaccines.length === 0) {
-        detailedContainer.innerHTML = '<p class="no-results">No vaccines triggered based on the current input. Try adjusting age or risk factors.</p>';
-        printBtn.disabled = true;
+      if (!results.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            Once you generate results, this tab will show – for each vaccine – the distinction between 
+            <strong>indication</strong>, <strong>recommendation for this patient</strong>, and 
+            <strong>coverage</strong> (public vs private).
+          </div>
+        `;
         return;
       }
 
-      const total = vaccines.length;
-      summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested</span>`;
-      printBtn.disabled = false;
+      let html = `
+        <table class="indication-table">
+          <thead>
+            <tr>
+              <th style="width:20%;">Vaccine</th>
+              <th style="width:32%;">Indication (NACI)</th>
+              <th style="width:28%;">Recommended for this patient?</th>
+              <th style="width:20%;">Coverage for this patient</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
 
-      // Vaccines are already globally sorted by priority before calling this
-      vaccines.forEach(v => {
-        detailedContainer.appendChild(buildVaccineCard(v));
+      results.forEach((r) => {
+        html += `
+          <tr>
+            <td>
+              <strong>${r.name}</strong>
+            </td>
+            <td>
+              ${r.indicationText}
+              <div class="ref">
+                Ref: ${r.naciRef}
+              </div>
+            </td>
+            <td>
+              <strong>${r.recommended ? "Yes" : "No / not routine"}</strong><br/>
+              ${r.recommendationText}
+            </td>
+            <td>
+              <strong>${
+                r.coverageType === "public"
+                  ? "Publicly funded"
+                  : r.coverageType === "private"
+                  ? "Private pay / third-party"
+                  : "Program-dependent"
+              }</strong><br/>
+              ${r.coverageText}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += "</tbody></table>";
+
+      container.innerHTML = html;
+    }
+
+    function setupTabs() {
+      const tabButtons = document.querySelectorAll(".tab-button");
+      const panels = document.querySelectorAll(".tab-panel");
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tabId = btn.getAttribute("data-tab");
+
+          tabButtons.forEach((b) => b.classList.remove("active"));
+          panels.forEach((p) => p.classList.remove("active"));
+
+          btn.classList.add("active");
+          const panel = document.getElementById(tabId);
+          if (panel) panel.classList.add("active");
+        });
       });
     }
 
-    function buildVaccineCard(v) {
-      const div = document.createElement('div');
-      div.className = 'vaccine-card';
+    function setupPrintButtons() {
+      const printButtons = document.querySelectorAll(".print-button");
+      printButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tabId = btn.getAttribute("data-print-tab");
+          const targetPanel = document.getElementById(tabId);
+          if (!targetPanel) return;
 
-      let pillClass = 'pill-private';
-      let pillText = 'Private-pay';
-      if (v.category === 'pharmacy-funded') {
-        pillClass = 'pill-pharm';
-        pillText = 'Publicly funded – pharmacy';
-      } else if (v.category === 'public-nonpharmacy') {
-        pillClass = 'pill-public';
-        pillText = 'Publicly funded – MD / public health';
-      }
+          const panels = document.querySelectorAll(".tab-panel");
+          panels.forEach((p) => p.classList.remove("print-target"));
+          targetPanel.classList.add("print-target");
 
-      const notesBlock = v.notes ? `<p class="muted"><strong>Extra note:</strong> ${v.notes}</p>` : '';
-      const naciBlock = v.naciQuote
-        ? `<p class="naci-quote"><strong>NACI:</strong> <em>${v.naciQuote}</em><br><span class="muted">${v.naciRef}</span></p>`
-        : '';
+          window.print();
 
-      const injectText = v.pharmacistCanInject === false
-        ? 'No – must be administered by another healthcare provider.'
-        : 'Yes – can be administered at the pharmacy.';
-
-      const priceBlock = v.category === 'private' && v.approxPrice
-        ? `<p><strong>Approx. price:</strong> $${v.approxPrice} per dose (Shoppers Drug Mart Meadowvale Town Center #779; taxes and admin fees extra).</p>`
-        : '';
-
-      div.innerHTML = `
-        <div class="vaccine-name-row">
-          <strong>${v.name}</strong>
-          <span class="pill ${pillClass}">${pillText}</span>
-        </div>
-        <div class="vaccine-body">
-          <p><strong>Why / eligibility:</strong> ${v.reason || 'N/A'}</p>
-          <p><strong>Funding summary:</strong> ${v.funding || 'N/A'}</p>
-          <p><strong>Schedule:</strong> ${v.schedule || 'N/A'}</p>
-          <p><strong>Schedule / Rx status:</strong> ${v.napraSchedule || 'N/A'} – ${v.rxInfo || ''}</p>
-          <p><strong>Pharmacist injection:</strong> ${injectText}</p>
-          ${priceBlock}
-          ${notesBlock}
-          ${naciBlock}
-        </div>
-      `;
-      return div;
-    }
-
-    // ---------- Print: QUICK summary -----------------------------------
-
-    function buildPrintQuickSummary(profile, vaccines) {
-      const container = document.getElementById('print-area');
-      const now = new Date();
-      const dateStr = now.toLocaleDateString();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const sexLabel =
-        profile.sex === 'female' ? 'Female' :
-        profile.sex === 'male' ? 'Male' :
-        profile.sex === 'other' ? 'Other / not listed' :
-        'Not specified';
-
-      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
-
-      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
-      const riskHtml = riskList.length
-        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
-        : '<p>None selected.</p>';
-
-      // Build quick eligible list using same grouping as on-screen
-      const eligibleLines = [];
-      const notEligibleNames = [];
-
-      QUICK_GROUPS.forEach(group => {
-        const groupVaccines = vaccines.filter(v => group.matchIds.includes(v.id));
-        if (groupVaccines.length === 0) {
-          notEligibleNames.push(group.label);
-        } else {
-          const v = groupVaccines[0];
-          let fundingText = '';
-          let patientCostText = '';
-          let priceText = '';
-
-          if (v.category === 'pharmacy-funded') {
-            fundingText = 'Publicly funded at pharmacy.';
-            patientCostText = '$0 (no out-of-pocket cost).';
-          } else if (v.category === 'public-nonpharmacy') {
-            fundingText = 'Publicly funded via family doctor / public health.';
-            patientCostText = '$0 (no out-of-pocket cost; not billed through pharmacy).';
-          } else if (v.category === 'private') {
-            fundingText = 'Not publicly funded for this patient (private-pay).';
-            patientCostText = 'Patient pays out-of-pocket or uses private insurance.';
-          }
-
-          if (v.category === 'private' && v.approxPrice) {
-            priceText = ` Approx. price: $${v.approxPrice} per dose.`;
-          }
-
-          let line = `<li><strong>${group.label}</strong> – ${fundingText} ${patientCostText}`;
-          if (priceText) line += ` ${priceText}`;
-          line += '</li>';
-
-          eligibleLines.push(line);
-        }
+          targetPanel.classList.remove("print-target");
+        });
       });
-
-      const eligibleHtml = eligibleLines.length
-        ? `<ul>${eligibleLines.join('')}</ul>`
-        : '<p>No vaccines recommended based on current inputs.</p>';
-
-      const notEligibleHtml = notEligibleNames.length
-        ? `<p class="small"><strong>Not currently recommended:</strong> ${notEligibleNames.join(', ')}</p>`
-        : '';
-
-      container.innerHTML = `
-        <h1>Vaccine Quick Summary</h1>
-        <p class="small">
-          Shoppers Drug Mart Meadowvale Town Center #779<br>
-          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
-        </p>
-        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
-
-        <h2>Patient information</h2>
-        <table>
-          <tr>
-            <th style="width: 25%;">Parameter</th>
-            <th>Details</th>
-          </tr>
-          <tr>
-            <td>Age</td>
-            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
-          </tr>
-          <tr>
-            <td>Sex at birth</td>
-            <td>${sexLabel}</td>
-          </tr>
-          <tr>
-            <td>Pregnant in weeks 32–36</td>
-            <td>${pregLabel}</td>
-          </tr>
-          <tr>
-            <td>Risk factors</td>
-            <td>${riskHtml}</td>
-          </tr>
-        </table>
-
-        <h2>Eligible vaccines (quick list)</h2>
-        ${eligibleHtml}
-        ${notEligibleHtml}
-
-        <h2>Notes</h2>
-        <p class="small">
-          This is a brief summary for patient counselling. It does not replace the Canadian Immunization Guide, NACI statements,
-          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
-        </p>
-      `;
     }
 
-    // ---------- Print: DETAILED summary --------------------------------
-
-    function buildPrintSummary(profile, vaccines) {
-      const container = document.getElementById('print-area');
-      const now = new Date();
-      const dateStr = now.toLocaleDateString();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const sexLabel =
-        profile.sex === 'female' ? 'Female' :
-        profile.sex === 'male' ? 'Male' :
-        profile.sex === 'other' ? 'Other / not listed' :
-        'Not specified';
-
-      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
-
-      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
-      const riskHtml = riskList.length
-        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
-        : '<p>None selected.</p>';
-
-      const rowsHtml = vaccines.map(v => {
-        const priceText = v.category === 'private' && v.approxPrice
-          ? `$${v.approxPrice} per dose`
-          : '';
-        return `
-        <tr>
-          <td>${v.name}</td>
-          <td>${v.funding || ''}</td>
-          <td>${v.reason || ''}</td>
-          <td>${v.schedule || ''}</td>
-          <td>${priceText}</td>
-        </tr>`;
-      }).join('');
-
-      container.innerHTML = `
-        <h1>Vaccine Recommendations Summary</h1>
-        <p class="small">
-          Shoppers Drug Mart Meadowvale Town Center #779<br>
-          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
-        </p>
-        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
-
-        <h2>Patient information</h2>
-        <table>
-          <tr>
-            <th style="width: 25%;">Parameter</th>
-            <th>Details</th>
-          </tr>
-          <tr>
-            <td>Age</td>
-            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
-          </tr>
-          <tr>
-            <td>Sex at birth</td>
-            <td>${sexLabel}</td>
-          </tr>
-          <tr>
-            <td>Pregnant in weeks 32–36</td>
-            <td>${pregLabel}</td>
-          </tr>
-          <tr>
-            <td>Risk factors</td>
-            <td>${riskHtml}</td>
-          </tr>
-        </table>
-
-        <h2>Recommended vaccines</h2>
-        <table>
-          <tr>
-            <th style="width: 22%;">Vaccine</th>
-            <th style="width: 24%;">Funding / schedule status</th>
-            <th style="width: 24%;">Why recommended</th>
-            <th style="width: 20%;">Schedule summary</th>
-            <th style="width: 10%;">Approx. price (per dose)</th>
-          </tr>
-          ${rowsHtml}
-        </table>
-
-        <h2>Notes & references</h2>
-        <p class="small">
-          This summary is based on a simplified tool. It does not replace the Canadian Immunization Guide, NACI statements,
-          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
-        </p>
-        <p class="small">
-          Key sources include the Canadian Immunization Guide (Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, Immunization of Adults),
-          NACI guidance documents, and Ontario Ministry of Health publicly funded immunization schedules.
-        </p>
-        <p class="small">
-          Prices are approximate for Shoppers Drug Mart Meadowvale Town Center #779 and may change over time. Taxes and administration fees are not included.
-        </p>
+    function clearResults() {
+      document.getElementById("quick-summary-content").innerHTML = `
+        <div class="empty-state">
+          Results cleared. Re-run eligibility to populate this view again.
+        </div>
       `;
+      document.getElementById("detailed-summary-content").innerHTML = `
+        <div class="empty-state">
+          Results cleared. Re-run eligibility to populate this view again.
+        </div>
+      `;
+      document.getElementById("indication-coverage-content").innerHTML = `
+        <div class="empty-state">
+          Results cleared. Re-run eligibility to populate this view again.
+        </div>
+      `;
+      renderMeta(null, null);
     }
 
-    // ---------- Tab switching ------------------------------------------
+    function resetForm() {
+      document.getElementById("eligibility-form").reset();
+      clearResults();
+    }
 
-    const tabQuick = document.getElementById('tab-quick');
-    const tabDetailed = document.getElementById('tab-detailed');
-    const quickSummaryEl = document.getElementById('quick-summary');
-    const detailedResultsEl = document.getElementById('detailed-results');
-    const printBtnGlobal = document.getElementById('print-btn');
+    document.addEventListener("DOMContentLoaded", () => {
+      setupTabs();
+      setupPrintButtons();
+      clearResults();
 
-    tabQuick.addEventListener('click', function () {
-      tabQuick.classList.add('active');
-      tabDetailed.classList.remove('active');
-      quickSummaryEl.classList.remove('hidden');
-      detailedResultsEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print quick summary';
-    });
+      document
+        .getElementById("eligibility-form")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          const patient = getPatientFromForm();
+          const results = evaluateVaccines(patient);
 
-    tabDetailed.addEventListener('click', function () {
-      tabDetailed.classList.add('active');
-      tabQuick.classList.remove('active');
-      detailedResultsEl.classList.remove('hidden');
-      quickSummaryEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print detailed summary';
-    });
+          renderMeta(patient, results);
+          renderQuickSummary(results);
+          renderDetailedSummary(results);
+          renderIndicationCoverage(results);
+        });
 
-    // ---------- Events --------------------------------------------------
+      document
+        .getElementById("clear-results-btn")
+        .addEventListener("click", clearResults);
 
-    document.getElementById('eligibility-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const profile = getPatientProfile();
-      const rawVaccines = evaluateVaccines(profile);
-
-      // Collapse public vs private so Shingrix/PCV20/RSV/HPV never show twice
-      const collapsed = collapsePublicPrivate(rawVaccines);
-
-      let vaccines = uniqueVaccines(collapsed);
-
-      // Apply global priority ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
-      vaccines.sort((a, b) => getPriority(a) - getPriority(b));
-
-      lastProfile = profile;
-      lastVaccines = vaccines;
-
-      renderResults(vaccines);
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', function () {
-      document.getElementById('eligibility-form').reset();
-      document.getElementById('results-detailed').innerHTML = '';
-      document.getElementById('summary-badge').textContent = '';
-      document.getElementById('print-btn').disabled = true;
-      document.getElementById('print-area').innerHTML = '';
-      document.getElementById('quick-summary').innerHTML = '';
-      lastProfile = null;
-      lastVaccines = [];
-
-      // Reset tabs to Quick summary
-      tabQuick.classList.add('active');
-      tabDetailed.classList.remove('active');
-      quickSummaryEl.classList.remove('hidden');
-      detailedResultsEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print quick summary';
-    });
-
-    document.getElementById('print-btn').addEventListener('click', function () {
-      if (!lastProfile || !lastVaccines || lastVaccines.length === 0) return;
-      if (tabQuick.classList.contains('active')) {
-        buildPrintQuickSummary(lastProfile, lastVaccines);
-      } else {
-        buildPrintSummary(lastProfile, lastVaccines);
-      }
-      window.print();
+      document
+        .getElementById("reset-form-btn")
+        .addEventListener("click", resetForm);
     });
   </script>
 </body>
