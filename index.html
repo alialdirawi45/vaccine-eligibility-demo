@@ -25,7 +25,12 @@
     .subtitle {
       font-size: 0.9rem;
       color: #555;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
     }
     .layout {
       display: grid;
@@ -108,6 +113,10 @@
     button.secondary {
       background: #e5e7eb;
       color: #111827;
+    }
+    .small-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
     }
     button:disabled {
       opacity: 0.5;
@@ -288,6 +297,55 @@
       font-size: 0.8rem;
       color: #9ca3af;
     }
+
+    /* ---------- DARK MODE ---------- */
+    body.dark {
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+    body.dark .card {
+      background: #020617;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    body.dark .subtitle,
+    body.dark .disclaimer,
+    body.dark .muted,
+    body.dark footer {
+      color: #9ca3af;
+    }
+    body.dark input[type="number"],
+    body.dark input[type="text"],
+    body.dark select {
+      background: #111827;
+      color: #e5e7eb;
+      border-color: #374151;
+    }
+    body.dark .section-title {
+      border-bottom-color: #1f2937;
+    }
+    body.dark .tab-button {
+      background: #111827;
+      color: #e5e7eb;
+    }
+    body.dark .tab-button.active {
+      background: #2563eb;
+      color: #fff;
+    }
+    body.dark .badge {
+      background: #1d4ed8;
+      color: #dbeafe;
+    }
+    body.dark .indication-table th {
+      background: #111827;
+    }
+    body.dark .indication-table th,
+    body.dark .indication-table td {
+      border-color: #1f2937;
+    }
+    body.dark #print-area {
+      background: #fff;
+      color: #111827;
+    }
   </style>
 </head>
 <body>
@@ -295,6 +353,9 @@
     <h1>Vaccine Eligibility Tool</h1>
     <div class="subtitle">
       Influenza, COVID-19, Pneumococcal (PCV20), Shingrix, RSV (Abrysvo), Tdap/Td (Adacel), HPV (Gardasil 9).
+    </div>
+    <div class="top-bar">
+      <button type="button" id="theme-toggle" class="secondary small-btn">Dark mode</button>
     </div>
 
     <div class="layout">
@@ -383,7 +444,7 @@
 
         <div class="tab-row">
           <button type="button" class="tab-button active" id="tab-quick">Quick summary</button>
-          <button type="button" class="tab-button" id="tab-detailed">Indication &amp; coverage</button>
+          <button type="button" class="tab-button" id="tab-detailed">Indication, recommendation &amp; coverage</button>
         </div>
 
         <div class="top-actions">
@@ -398,7 +459,7 @@
           <div class="section-tagline">
             For each vaccine, this table shows: <strong>Indication</strong> (from NACI), whether it is
             <strong>recommended for this patient</strong> (Yes/No), and <strong>coverage</strong> (public vs private/out-of-pocket).
-            “Yes” in the recommendation column is highlighted.
+            “Yes” in the recommendation column is highlighted. Shingrix, Prevnar, and RSV will always appear at the top.
           </div>
           <div id="indication-coverage"></div>
         </div>
@@ -467,9 +528,9 @@
       'rsv-preg': 1,
       'influenza': 2,
       'covid': 2,
-      'tdap': 3,
       'hpv-public': 3,
-      'hpv-private': 3
+      'hpv-private': 3,
+      'tdap': 3
     };
 
     function getPriority(v) {
@@ -486,6 +547,17 @@
       { key: 'hpv', label: 'HPV (Gardasil 9)', matchIds: ['hpv-public', 'hpv-private'] },
       { key: 'tdap', label: 'Tdap/Td (Adacel)', matchIds: ['tdap'] }
     ];
+
+    // For indication/coverage ordering: Shingrix/Prevnar/RSV first
+    const INDIC_ORDER = {
+      'shingrix': 1,
+      'pcv20': 1,
+      'rsv': 1,
+      'influenza': 2,
+      'covid': 2,
+      'hpv': 3,
+      'tdap': 3
+    };
 
     let lastProfile = null;
     let lastVaccines = [];
@@ -538,14 +610,12 @@
       let filtered = [...vaxList];
 
       QUICK_GROUPS.forEach(group => {
-        // Is there any public / pharmacy-funded version in this group?
         const hasPublic = filtered.some(
           v =>
             group.matchIds.includes(v.id) &&
             (v.category === 'pharmacy-funded' || v.category === 'public-nonpharmacy')
         );
 
-        // If public exists, remove private entries for this group
         if (hasPublic) {
           filtered = filtered.filter(
             v => !(group.matchIds.includes(v.id) && v.category === 'private')
@@ -615,8 +685,8 @@
 
       // 3. Pneumococcal – PCV20 (Prevnar 20)
       if (isAdult) {
-        const highRisk = isHighRiskAdult(profile);
-        if (is65plus || highRisk) {
+        const highRiskAgain = isHighRiskAdult(profile);
+        if (is65plus || highRiskAgain) {
           vax.push({
             id: 'pcv20',
             name: 'Pneumococcal conjugate 20-valent (PCV20 / Prevnar 20)',
@@ -684,10 +754,10 @@
 
       // 5. RSV – Abrysvo (RSVpreF)
       if (age >= 60 || pregnantWindow) {
-        const is60plus = age >= 60;
-        const is75plus = age >= 75;
-        const highRiskAgain = isHighRiskAdult(profile);
-        const isVeryHighRiskOlder = is75plus || (is60plus && (highRiskAgain || hasRisk(profile, 'ltc')));
+        const is60plus2 = age >= 60;
+        const is75plus2 = age >= 75;
+        const highRisk2 = isHighRiskAdult(profile);
+        const isVeryHighRiskOlder = is75plus2 || (is60plus2 && (highRisk2 || hasRisk(profile, 'ltc')));
 
         if (isVeryHighRiskOlder) {
           vax.push({
@@ -705,7 +775,7 @@
             pharmacistCanInject: true,
             approxPrice: null
           });
-        } else if (is60plus) {
+        } else if (is60plus2) {
           vax.push({
             id: 'rsv-private',
             name: 'RSV vaccine – Abrysvo (RSVpreF)',
@@ -1057,6 +1127,13 @@
         });
       }
 
+      // Always list Shingrix/Prevnar/RSV first, then others
+      rows.sort((a, b) => {
+        const pa = INDIC_ORDER[a.key] !== undefined ? INDIC_ORDER[a.key] : 99;
+        const pb = INDIC_ORDER[b.key] !== undefined ? INDIC_ORDER[b.key] : 99;
+        return pa - pb;
+      });
+
       return rows;
     }
 
@@ -1136,7 +1213,6 @@
         ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
         : '<p>None selected.</p>';
 
-      // Build quick eligible list using same grouping as on-screen
       const eligibleLines = [];
       const notEligibleNames = [];
 
@@ -1271,7 +1347,7 @@
       }).join('');
 
       container.innerHTML = `
-        <h1>Vaccine Indication &amp; Coverage Summary</h1>
+        <h1>Vaccine Indication, Recommendation &amp; Coverage</h1>
         <p class="small">
           Shoppers Drug Mart Meadowvale Town Center #779<br>
           Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
@@ -1325,13 +1401,14 @@
       `;
     }
 
-    // ---------- Tab switching ------------------------------------------
+    // ---------- Tab switching & theme toggle ---------------------------
 
     const tabQuick = document.getElementById('tab-quick');
     const tabDetailed = document.getElementById('tab-detailed');
     const quickSummaryEl = document.getElementById('quick-summary');
     const detailedResultsEl = document.getElementById('detailed-results');
     const printBtnGlobal = document.getElementById('print-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle');
 
     tabQuick.addEventListener('click', function () {
       tabQuick.classList.add('active');
@@ -1346,7 +1423,13 @@
       tabQuick.classList.remove('active');
       detailedResultsEl.classList.remove('hidden');
       quickSummaryEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print indication & coverage';
+      printBtnGlobal.textContent = 'Print indication, recommendation & coverage';
+    });
+
+    themeToggleBtn.addEventListener('click', function () {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      themeToggleBtn.textContent = isDark ? 'Light mode' : 'Dark mode';
     });
 
     // ---------- Events --------------------------------------------------
@@ -1356,22 +1439,18 @@
       const profile = getPatientProfile();
       const rawVaccines = evaluateVaccines(profile);
 
-      // Collapse public vs private so Shingrix/PCV20/RSV/HPV never show twice
       const collapsed = collapsePublicPrivate(rawVaccines);
-
       let vaccines = uniqueVaccines(collapsed);
 
-      // Apply global priority ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
+      // Apply quick-summary ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
       vaccines.sort((a, b) => getPriority(a) - getPriority(b));
 
       lastProfile = profile;
       lastVaccines = vaccines;
 
-      // Update quick summary and indication/coverage views
       renderQuickSummary(vaccines);
       renderIndicationCoverage(profile);
 
-      // Update badge + print button state
       const summaryBadge = document.getElementById('summary-badge');
       if (!vaccines || vaccines.length === 0) {
         summaryBadge.textContent = '';
@@ -1393,7 +1472,6 @@
       lastProfile = null;
       lastVaccines = [];
 
-      // Reset tabs to Quick summary
       tabQuick.classList.add('active');
       tabDetailed.classList.remove('active');
       quickSummaryEl.classList.remove('hidden');
