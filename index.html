@@ -615,7 +615,6 @@
 
       // 3. Pneumococcal – PCV20 (Prevnar 20)
       if (isAdult) {
-        // Now: recommended only for 65+ or high-risk adults (matches your “indicated but not recommended unless high-risk/older” idea)
         const highRisk = isHighRiskAdult(profile);
         if (is65plus || highRisk) {
           vax.push({
@@ -684,11 +683,11 @@
       }
 
       // 5. RSV – Abrysvo (RSVpreF)
-      if (age >= 60 || profile.pregnantWindow) {
+      if (age >= 60 || pregnantWindow) {
         const is60plus = age >= 60;
         const is75plus = age >= 75;
-        const highRisk = isHighRiskAdult(profile);
-        const isVeryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
+        const highRiskAgain = isHighRiskAdult(profile);
+        const isVeryHighRiskOlder = is75plus || (is60plus && (highRiskAgain || hasRisk(profile, 'ltc')));
 
         if (isVeryHighRiskOlder) {
           vax.push({
@@ -724,7 +723,7 @@
           });
         }
 
-        if (profile.pregnantWindow) {
+        if (pregnantWindow) {
           vax.push({
             id: 'rsv-preg',
             name: 'RSV vaccine – Abrysvo (maternal use)',
@@ -885,7 +884,6 @@
 
       const rows = [];
 
-      // Helper for Yes/No coverage
       function coverageText({ publicPharm = false, publicMD = false, privatePay = false }) {
         if (publicPharm) return 'Yes – publicly funded at pharmacy.';
         if (publicMD) return 'Yes – publicly funded (usually via family doctor or public health).';
@@ -935,7 +933,6 @@
 
       // 3. Pneumococcal – PCV20 (Prevnar 20)
       {
-        // Your example: indicated ≥6 months, not routinely recommended/covered unless high risk / older
         const indicated = age >= 1; // approximates ≥6 months
         const recommended = is65plus || highRisk;
         const cov = recommended
@@ -960,7 +957,7 @@
       // 4. Shingrix (RZV)
       {
         const indicated = (age >= 50) || (immuno && isAdult);
-        const recommended = indicated; // NACI recommends RZV for ≥50 and immunocompromised ≥18
+        const recommended = indicated;
         const publicWindow = age >= 65 && age <= 70;
         const cov = publicWindow
           ? coverageText({ publicMD: true })
@@ -984,10 +981,11 @@
       // 5. RSV – Abrysvo
       {
         const indicated = (age >= 60) || pregnantWindow;
-        const recommended = indicated; // recommended for adults ≥60 and select pregnant persons
-        const is60plus = age >= 60;
-        const is75plus = age >= 75;
-        const veryHighRiskOlder = is75plus || (is60plus && (highRisk || hasRisk(profile, 'ltc')));
+        const recommended = indicated;
+        const is60plus2 = age >= 60;
+        const is75plus2 = age >= 75;
+        const highRisk2 = isHighRiskAdult(profile);
+        const veryHighRiskOlder = is75plus2 || (is60plus2 && (highRisk2 || hasRisk(profile, 'ltc')));
         const cov = veryHighRiskOlder || pregnantWindow
           ? coverageText({ publicMD: true })
           : coverageText({ privatePay: true });
@@ -1032,7 +1030,7 @@
       {
         const indicated = age >= 9 && age <= 45;
         const recommended =
-          (age >= 9 && age <= 26) || (age >= 27 && age <= 45 && isAdult); // older adults: shared decision, but count as "Yes" with caveat
+          (age >= 9 && age <= 26) || (age >= 27 && age <= 45 && isAdult);
         let cov;
         if (age >= 12 && age <= 17) {
           cov = coverageText({ publicMD: true }) + ' (school-based program in many provinces).';
@@ -1227,9 +1225,9 @@
       `;
     }
 
-    // ---------- Print: DETAILED summary (big table) ---------------------
+    // ---------- Print: INDICATION & COVERAGE summary -------------------
 
-    function buildPrintSummary(profile, vaccines) {
+    function buildPrintSummary(profile) {
       const container = document.getElementById('print-area');
       const now = new Date();
       const dateStr = now.toLocaleDateString();
@@ -1248,22 +1246,32 @@
         ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
         : '<p>None selected.</p>';
 
-      const rowsHtml = vaccines.map(v => {
-        const priceText = v.category === 'private' && v.approxPrice
-          ? `$${v.approxPrice} per dose`
-          : '';
+      const rows = evaluateIndicationCoverage(profile);
+
+      const rowsHtml = rows.map(row => {
+        const recLabel = row.recommended
+          ? `<span class="yes-highlight">Yes</span>`
+          : `<span class="no-dim">No</span>`;
         return `
-        <tr>
-          <td>${v.name}</td>
-          <td>${v.funding || ''}</td>
-          <td>${v.reason || ''}</td>
-          <td>${v.schedule || ''}</td>
-          <td>${priceText}</td>
-        </tr>`;
+          <tr>
+            <td>${row.name}</td>
+            <td>
+              ${row.indicated ? '<strong>Indicated:</strong> Yes.' : '<strong>Indicated:</strong> No.'}
+              <br>${row.indicationText}
+              <div class="small">${row.indicationRef}</div>
+            </td>
+            <td>
+              ${recLabel}
+              <br>${row.recommendationText}
+              <div class="small">${row.recommendationRef}</div>
+            </td>
+            <td>${row.coverage}</td>
+          </tr>
+        `;
       }).join('');
 
       container.innerHTML = `
-        <h1>Vaccine Recommendations Summary</h1>
+        <h1>Vaccine Indication &amp; Coverage Summary</h1>
         <p class="small">
           Shoppers Drug Mart Meadowvale Town Center #779<br>
           Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
@@ -1294,14 +1302,13 @@
           </tr>
         </table>
 
-        <h2>Recommended vaccines</h2>
+        <h2>Indication, recommendation, and coverage by vaccine</h2>
         <table>
           <tr>
-            <th style="width: 22%;">Vaccine</th>
-            <th style="width: 24%;">Funding / schedule status</th>
-            <th style="width: 24%;">Why recommended</th>
-            <th style="width: 20%;">Schedule summary</th>
-            <th style="width: 10%;">Approx. price (per dose)</th>
+            <th style="width: 18%;">Vaccine</th>
+            <th style="width: 32%;">Indication (NACI)</th>
+            <th style="width: 30%;">Recommended for this patient?</th>
+            <th style="width: 20%;">Coverage</th>
           </tr>
           ${rowsHtml}
         </table>
@@ -1314,9 +1321,6 @@
         <p class="small">
           Key sources include the Canadian Immunization Guide (Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, Immunization of Adults),
           NACI guidance documents, and Ontario Ministry of Health publicly funded immunization schedules.
-        </p>
-        <p class="small">
-          Prices are approximate for Shoppers Drug Mart Meadowvale Town Center #779 and may change over time. Taxes and administration fees are not included.
         </p>
       `;
     }
@@ -1342,7 +1346,7 @@
       tabQuick.classList.remove('active');
       detailedResultsEl.classList.remove('hidden');
       quickSummaryEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print detailed summary';
+      printBtnGlobal.textContent = 'Print indication & coverage';
     });
 
     // ---------- Events --------------------------------------------------
@@ -1398,11 +1402,12 @@
     });
 
     document.getElementById('print-btn').addEventListener('click', function () {
-      if (!lastProfile || !lastVaccines || lastVaccines.length === 0) return;
+      if (!lastProfile) return;
       if (tabQuick.classList.contains('active')) {
+        if (!lastVaccines || lastVaccines.length === 0) return;
         buildPrintQuickSummary(lastProfile, lastVaccines);
       } else {
-        buildPrintSummary(lastProfile, lastVaccines);
+        buildPrintSummary(lastProfile);
       }
       window.print();
     });
