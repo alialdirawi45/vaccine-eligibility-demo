@@ -14,7 +14,7 @@
       color: #222;
     }
     .page {
-      max-width: 1000px;
+      max-width: 1200px; /* WIDER PAGE */
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
@@ -34,7 +34,7 @@
     }
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.7fr); /* WIDER RIGHT SIDE */
       gap: 16px;
     }
     @media (max-width: 860px) {
@@ -217,7 +217,7 @@
     }
     .vaccine-col {
       font-weight: 600;
-      width: 22%;
+      width: 20%;
     }
     .yes-highlight {
       display: inline-block;
@@ -510,14 +510,12 @@
       'smoker': 'Current smoker'
     };
 
-    // Prices (per dose) for private-pay vaccines at this pharmacy
     const PRICE_PREVNAR20 = 145;
     const PRICE_SHINGRIX = 205;
     const PRICE_ABRYSVO = 290;
     const PRICE_GARDASIL9 = 225;
-    const PRICE_ADACEL = 70; // not currently displayed, kept for future use
+    const PRICE_ADACEL = 70;
 
-    // Priority ordering: lower = higher priority
     const PRIORITY_ORDER = {
       'pcv20': 1,
       'pcv20-private': 1,
@@ -537,7 +535,6 @@
       return PRIORITY_ORDER[v.id] !== undefined ? PRIORITY_ORDER[v.id] : 99;
     }
 
-    // For quick summary grouping
     const QUICK_GROUPS = [
       { key: 'pcv20', label: 'Prevnar 20 (PCV20)', matchIds: ['pcv20', 'pcv20-private'] },
       { key: 'shingrix', label: 'Shingrix (RZV)', matchIds: ['shingrix-public', 'shingrix-private'] },
@@ -548,7 +545,6 @@
       { key: 'tdap', label: 'Tdap/Td (Adacel)', matchIds: ['tdap'] }
     ];
 
-    // For indication/coverage ordering: Shingrix/Prevnar/RSV first
     const INDIC_ORDER = {
       'shingrix': 1,
       'pcv20': 1,
@@ -561,8 +557,6 @@
 
     let lastProfile = null;
     let lastVaccines = [];
-
-    // ---------- Helpers -------------------------------------------------
 
     function getPatientProfile() {
       const age = parseInt(document.getElementById('age').value, 10);
@@ -605,7 +599,6 @@
       return unique;
     }
 
-    // Collapse public vs private so each vaccine appears only once
     function collapsePublicPrivate(vaxList) {
       let filtered = [...vaxList];
 
@@ -626,8 +619,6 @@
       return filtered;
     }
 
-    // ---------- Core logic: recommended vaccines (for quick & print) ----
-
     function evaluateVaccines(profile) {
       const vax = [];
       const age = profile.age;
@@ -641,7 +632,6 @@
       const highRisk = isHighRiskAdult(profile);
       const pregnantWindow = profile.pregnantWindow;
 
-      // 1. Influenza
       if (age >= 2) {
         vax.push({
           id: 'influenza',
@@ -660,7 +650,6 @@
         });
       }
 
-      // 2. COVID-19 (updated formulations, adults)
       if (age >= 18) {
         let reason = 'Annual updated COVID-19 vaccine is recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
         if (is65plus || highRisk) {
@@ -683,7 +672,6 @@
         });
       }
 
-      // 3. Pneumococcal – PCV20 (Prevnar 20)
       if (isAdult) {
         const highRiskAgain = isHighRiskAdult(profile);
         if (is65plus || highRiskAgain) {
@@ -707,7 +695,6 @@
         }
       }
 
-      // 4. Shingrix (RZV)
       if (age >= 18) {
         const isImmuno = hasRisk(profile, 'immunocompromised');
         const is50plus = age >= 50;
@@ -752,7 +739,6 @@
         }
       }
 
-      // 5. RSV – Abrysvo (RSVpreF)
       if (age >= 60 || pregnantWindow) {
         const is60plus2 = age >= 60;
         const is75plus2 = age >= 75;
@@ -812,7 +798,6 @@
         }
       }
 
-      // 6. Tdap / Td – adult boosters (Adacel)
       if (isAdult) {
         vax.push({
           id: 'tdap',
@@ -831,7 +816,6 @@
         });
       }
 
-      // 7. HPV – Gardasil 9 (9vHPV)
       if (age >= 9 && age <= 45) {
         if (age >= 12 && age <= 17) {
           vax.push({
@@ -876,8 +860,6 @@
 
       return vax;
     }
-
-    // ---------- Quick summary rendering --------------------------------
 
     function renderQuickSummary(vaccines) {
       const container = document.getElementById('quick-summary');
@@ -938,8 +920,6 @@
       container.innerHTML = html;
     }
 
-    // ---------- Indication / Recommendation / Coverage ------------------
-
     function evaluateIndicationCoverage(profile) {
       const age = profile.age;
       if (Number.isNaN(age) || age < 0) return [];
@@ -961,10 +941,9 @@
         return 'No public coverage for this patient.';
       }
 
-      // 1. Influenza
       {
-        const indicated = age >= 1; // approximates ≥6 months
-        const recommended = age >= 2; // tool focus
+        const indicated = age >= 1;
+        const recommended = age >= 2;
         const cov = recommended ? coverageText({ publicPharm: true }) : coverageText({ publicMD: true });
         rows.push({
           key: 'influenza',
@@ -981,9 +960,8 @@
         });
       }
 
-      // 2. COVID-19
       {
-        const indicated = age >= 6; // really 6 months+, approximated
+        const indicated = age >= 6;
         const recommended = age >= 18;
         const cov = recommended ? coverageText({ publicPharm: true }) : coverageText({ publicMD: true });
         rows.push({
@@ -1001,9 +979,8 @@
         });
       }
 
-      // 3. Pneumococcal – PCV20 (Prevnar 20)
       {
-        const indicated = age >= 1; // approximates ≥6 months
+        const indicated = age >= 1;
         const recommended = is65plus || highRisk;
         const cov = recommended
           ? coverageText({ publicMD: true })
@@ -1024,7 +1001,6 @@
         });
       }
 
-      // 4. Shingrix (RZV)
       {
         const indicated = (age >= 50) || (immuno && isAdult);
         const recommended = indicated;
@@ -1048,447 +1024,9 @@
         });
       }
 
-      // 5. RSV – Abrysvo
       {
         const indicated = (age >= 60) || pregnantWindow;
         const recommended = indicated;
         const is60plus2 = age >= 60;
-        const is75plus2 = age >= 75;
-        const highRisk2 = isHighRiskAdult(profile);
-        const veryHighRiskOlder = is75plus2 || (is60plus2 && (highRisk2 || hasRisk(profile, 'ltc')));
-        const cov = veryHighRiskOlder || pregnantWindow
-          ? coverageText({ publicMD: true })
-          : coverageText({ privatePay: true });
-
-        rows.push({
-          key: 'rsv',
-          name: 'RSV – Abrysvo',
-          indicated,
-          indicationText: 'NACI: RSVpreF (Abrysvo) can be used in adults ≥60 years and in a defined gestational window of pregnancy.',
-          indicationRef: 'NACI RSV vaccine guidance',
-          recommended,
-          recommendationText: recommended
-            ? 'Yes – recommended for adults ≥60 (especially very high-risk) and for some pregnant patients (e.g., 32–36 weeks).'
-            : 'No – not recommended outside these age/pregnancy groups.',
-          recommendationRef: 'NACI guidance for RSV vaccines in older adults and pregnancy',
-          coverage: cov
-        });
-      }
-
-      // 6. Tdap / Td – Adacel
-      {
-        const indicated = isAdult;
-        const recommended = isAdult;
-        const cov = recommended ? coverageText({ publicMD: true }) : coverageText({ publicMD: true });
-
-        rows.push({
-          key: 'tdap',
-          name: 'Tdap/Td (Adacel)',
-          indicated,
-          indicationText: 'NACI: adults should receive one lifetime Tdap dose and Td/Tdap boosters every 10 years; Tdap in each pregnancy.',
-          indicationRef: 'CIG – Immunization of adults / Pertussis-containing vaccines',
-          recommended,
-          recommendationText: recommended
-            ? 'Yes – recommended for adults (and once each pregnancy).'
-            : 'No – not in scope for this age group.',
-          recommendationRef: 'NACI pertussis-containing vaccine recommendations',
-          coverage: cov
-        });
-      }
-
-      // 7. HPV – Gardasil 9
-      {
-        const indicated = age >= 9 && age <= 45;
-        const recommended =
-          (age >= 9 && age <= 26) || (age >= 27 && age <= 45 && isAdult);
-        let cov;
-        if (age >= 12 && age <= 17) {
-          cov = coverageText({ publicMD: true }) + ' (school-based program in many provinces).';
-        } else if (indicated) {
-          cov = coverageText({ privatePay: true });
-        } else {
-          cov = coverageText({});
-        }
-
-        rows.push({
-          key: 'hpv',
-          name: 'HPV – Gardasil 9',
-          indicated,
-          indicationText: 'NACI: HPV vaccination for individuals 9–26 years; may be offered up to age 45 based on risk.',
-          indicationRef: 'CIG/NACI – HPV vaccine chapter',
-          recommended,
-          recommendationText: recommended
-            ? (age <= 26
-                ? 'Yes – strongly recommended in the core 9–26 age group.'
-                : 'Yes – may be offered based on ongoing risk and shared decision-making (age 27–45).')
-            : 'No – outside the usual indication age range.',
-          recommendationRef: 'NACI HPV vaccine recommendations',
-          coverage: cov
-        });
-      }
-
-      // Always list Shingrix/Prevnar/RSV first, then others
-      rows.sort((a, b) => {
-        const pa = INDIC_ORDER[a.key] !== undefined ? INDIC_ORDER[a.key] : 99;
-        const pb = INDIC_ORDER[b.key] !== undefined ? INDIC_ORDER[b.key] : 99;
-        return pa - pb;
-      });
-
-      return rows;
-    }
-
-    function renderIndicationCoverage(profile) {
-      const container = document.getElementById('indication-coverage');
-      container.innerHTML = '';
-
-      if (!profile || Number.isNaN(profile.age)) {
-        container.innerHTML = '<p class="no-results">Enter age and risk factors, then click “Check vaccines” to see indication and coverage.</p>';
-        return;
-      }
-
-      const rows = evaluateIndicationCoverage(profile);
-      if (!rows || rows.length === 0) {
-        container.innerHTML = '<p class="no-results">No vaccines in scope for this age.</p>';
-        return;
-      }
-
-      let html = `
-        <table class="indication-table">
-          <thead>
-            <tr>
-              <th class="vaccine-col">Vaccine</th>
-              <th>Indication (NACI)</th>
-              <th>Recommended for this patient?</th>
-              <th>Coverage</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      rows.forEach(row => {
-        const recLabel = row.recommended
-          ? `<span class="yes-highlight">Yes</span>`
-          : `<span class="no-dim">No</span>`;
-
-        html += `
-          <tr>
-            <td class="vaccine-col">${row.name}</td>
-            <td>
-              ${row.indicated ? '<strong>Indicated:</strong> Yes.' : '<strong>Indicated:</strong> No.'}
-              <br>${row.indicationText}
-              <span class="small-ref">${row.indicationRef}</span>
-            </td>
-            <td>
-              ${recLabel}
-              <br>${row.recommendationText}
-              <span class="small-ref">${row.recommendationRef}</span>
-            </td>
-            <td>${row.coverage}</td>
-          </tr>
-        `;
-      });
-
-      html += '</tbody></table>';
-      container.innerHTML = html;
-    }
-
-    // ---------- Print: QUICK summary -----------------------------------
-
-    function buildPrintQuickSummary(profile, vaccines) {
-      const container = document.getElementById('print-area');
-      const now = new Date();
-      const dateStr = now.toLocaleDateString();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const sexLabel =
-        profile.sex === 'female' ? 'Female' :
-        profile.sex === 'male' ? 'Male' :
-        profile.sex === 'other' ? 'Other / not listed' :
-        'Not specified';
-
-      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
-
-      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
-      const riskHtml = riskList.length
-        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
-        : '<p>None selected.</p>';
-
-      const eligibleLines = [];
-      const notEligibleNames = [];
-
-      QUICK_GROUPS.forEach(group => {
-        const groupVaccines = vaccines.filter(v => group.matchIds.includes(v.id));
-        if (groupVaccines.length === 0) {
-          notEligibleNames.push(group.label);
-        } else {
-          const v = groupVaccines[0];
-          let fundingText = '';
-          let patientCostText = '';
-          let priceText = '';
-
-          if (v.category === 'pharmacy-funded') {
-            fundingText = 'Publicly funded at pharmacy.';
-            patientCostText = '$0 (no out-of-pocket cost).';
-          } else if (v.category === 'public-nonpharmacy') {
-            fundingText = 'Publicly funded via family doctor / public health.';
-            patientCostText = '$0 (no out-of-pocket cost; not billed through pharmacy).';
-          } else if (v.category === 'private') {
-            fundingText = 'Not publicly funded for this patient (private-pay).';
-            patientCostText = 'Patient pays out-of-pocket or uses private insurance.';
-          }
-
-          if (v.category === 'private' && v.approxPrice) {
-            priceText = ` Approx. price: $${v.approxPrice} per dose.`;
-          }
-
-          let line = `<li><strong>${group.label}</strong> – ${fundingText} ${patientCostText}`;
-          if (priceText) line += ` ${priceText}`;
-          line += '</li>';
-
-          eligibleLines.push(line);
-        }
-      });
-
-      const eligibleHtml = eligibleLines.length
-        ? `<ul>${eligibleLines.join('')}</ul>`
-        : '<p>No vaccines recommended based on current inputs.</p>';
-
-      const notEligibleHtml = notEligibleNames.length
-        ? `<p class="small"><strong>Not currently recommended:</strong> ${notEligibleNames.join(', ')}</p>`
-        : '';
-
-      container.innerHTML = `
-        <h1>Vaccine Quick Summary</h1>
-        <p class="small">
-          Shoppers Drug Mart Meadowvale Town Center #779<br>
-          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
-        </p>
-        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
-
-        <h2>Patient information</h2>
-        <table>
-          <tr>
-            <th style="width: 25%;">Parameter</th>
-            <th>Details</th>
-          </tr>
-          <tr>
-            <td>Age</td>
-            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
-          </tr>
-          <tr>
-            <td>Sex at birth</td>
-            <td>${sexLabel}</td>
-          </tr>
-          <tr>
-            <td>Pregnant in weeks 32–36</td>
-            <td>${pregLabel}</td>
-          </tr>
-          <tr>
-            <td>Risk factors</td>
-            <td>${riskHtml}</td>
-          </tr>
-        </table>
-
-        <h2>Eligible vaccines (quick list)</h2>
-        ${eligibleHtml}
-        ${notEligibleHtml}
-
-        <h2>Notes</h2>
-        <p class="small">
-          This is a brief summary for patient counselling. It does not replace the Canadian Immunization Guide, NACI statements,
-          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
-        </p>
-      `;
-    }
-
-    // ---------- Print: INDICATION & COVERAGE summary -------------------
-
-    function buildPrintSummary(profile) {
-      const container = document.getElementById('print-area');
-      const now = new Date();
-      const dateStr = now.toLocaleDateString();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const sexLabel =
-        profile.sex === 'female' ? 'Female' :
-        profile.sex === 'male' ? 'Male' :
-        profile.sex === 'other' ? 'Other / not listed' :
-        'Not specified';
-
-      const pregLabel = profile.pregnantWindow ? 'Yes' : 'No';
-
-      const riskList = profile.risks.map(r => RISK_LABELS[r] || r);
-      const riskHtml = riskList.length
-        ? `<ul>${riskList.map(r => `<li>${r}</li>`).join('')}</ul>`
-        : '<p>None selected.</p>';
-
-      const rows = evaluateIndicationCoverage(profile);
-
-      const rowsHtml = rows.map(row => {
-        const recLabel = row.recommended
-          ? `<span class="yes-highlight">Yes</span>`
-          : `<span class="no-dim">No</span>`;
-        return `
-          <tr>
-            <td>${row.name}</td>
-            <td>
-              ${row.indicated ? '<strong>Indicated:</strong> Yes.' : '<strong>Indicated:</strong> No.'}
-              <br>${row.indicationText}
-              <div class="small">${row.indicationRef}</div>
-            </td>
-            <td>
-              ${recLabel}
-              <br>${row.recommendationText}
-              <div class="small">${row.recommendationRef}</div>
-            </td>
-            <td>${row.coverage}</td>
-          </tr>
-        `;
-      }).join('');
-
-      container.innerHTML = `
-        <h1>Vaccine Indication, Recommendation &amp; Coverage</h1>
-        <p class="small">
-          Shoppers Drug Mart Meadowvale Town Center #779<br>
-          Phone: 905-826-7112 &nbsp;|&nbsp; Fax: 905-826-4152
-        </p>
-        <p class="small">Generated on ${dateStr} at ${timeStr}</p>
-
-        <h2>Patient information</h2>
-        <table>
-          <tr>
-            <th style="width: 25%;">Parameter</th>
-            <th>Details</th>
-          </tr>
-          <tr>
-            <td>Age</td>
-            <td>${Number.isNaN(profile.age) ? 'Not entered' : profile.age + ' years'}</td>
-          </tr>
-          <tr>
-            <td>Sex at birth</td>
-            <td>${sexLabel}</td>
-          </tr>
-          <tr>
-            <td>Pregnant in weeks 32–36</td>
-            <td>${pregLabel}</td>
-          </tr>
-          <tr>
-            <td>Risk factors</td>
-            <td>${riskHtml}</td>
-          </tr>
-        </table>
-
-        <h2>Indication, recommendation, and coverage by vaccine</h2>
-        <table>
-          <tr>
-            <th style="width: 18%;">Vaccine</th>
-            <th style="width: 32%;">Indication (NACI)</th>
-            <th style="width: 30%;">Recommended for this patient?</th>
-            <th style="width: 20%;">Coverage</th>
-          </tr>
-          ${rowsHtml}
-        </table>
-
-        <h2>Notes & references</h2>
-        <p class="small">
-          This summary is based on a simplified tool. It does not replace the Canadian Immunization Guide, NACI statements,
-          provincial immunization schedules, or product monographs. Final decisions should be confirmed by a health care provider.
-        </p>
-        <p class="small">
-          Key sources include the Canadian Immunization Guide (Influenza, COVID-19, Pneumococcal, Herpes Zoster, HPV, RSV, Immunization of Adults),
-          NACI guidance documents, and Ontario Ministry of Health publicly funded immunization schedules.
-        </p>
-      `;
-    }
-
-    // ---------- Tab switching & theme toggle ---------------------------
-
-    const tabQuick = document.getElementById('tab-quick');
-    const tabDetailed = document.getElementById('tab-detailed');
-    const quickSummaryEl = document.getElementById('quick-summary');
-    const detailedResultsEl = document.getElementById('detailed-results');
-    const printBtnGlobal = document.getElementById('print-btn');
-    const themeToggleBtn = document.getElementById('theme-toggle');
-
-    tabQuick.addEventListener('click', function () {
-      tabQuick.classList.add('active');
-      tabDetailed.classList.remove('active');
-      quickSummaryEl.classList.remove('hidden');
-      detailedResultsEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print quick summary';
-    });
-
-    tabDetailed.addEventListener('click', function () {
-      tabDetailed.classList.add('active');
-      tabQuick.classList.remove('active');
-      detailedResultsEl.classList.remove('hidden');
-      quickSummaryEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print indication, recommendation & coverage';
-    });
-
-    themeToggleBtn.addEventListener('click', function () {
-      document.body.classList.toggle('dark');
-      const isDark = document.body.classList.contains('dark');
-      themeToggleBtn.textContent = isDark ? 'Light mode' : 'Dark mode';
-    });
-
-    // ---------- Events --------------------------------------------------
-
-    document.getElementById('eligibility-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      const profile = getPatientProfile();
-      const rawVaccines = evaluateVaccines(profile);
-
-      const collapsed = collapsePublicPrivate(rawVaccines);
-      let vaccines = uniqueVaccines(collapsed);
-
-      // Apply quick-summary ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
-      vaccines.sort((a, b) => getPriority(a) - getPriority(b));
-
-      lastProfile = profile;
-      lastVaccines = vaccines;
-
-      renderQuickSummary(vaccines);
-      renderIndicationCoverage(profile);
-
-      const summaryBadge = document.getElementById('summary-badge');
-      if (!vaccines || vaccines.length === 0) {
-        summaryBadge.textContent = '';
-        printBtnGlobal.disabled = true;
-      } else {
-        const total = vaccines.length;
-        summaryBadge.innerHTML = `<span class="badge">${total} vaccine${total !== 1 ? 's' : ''} suggested</span>`;
-        printBtnGlobal.disabled = false;
-      }
-    });
-
-    document.getElementById('reset-btn').addEventListener('click', function () {
-      document.getElementById('eligibility-form').reset();
-      document.getElementById('summary-badge').textContent = '';
-      document.getElementById('print-btn').disabled = true;
-      document.getElementById('print-area').innerHTML = '';
-      document.getElementById('quick-summary').innerHTML = '';
-      document.getElementById('indication-coverage').innerHTML = '';
-      lastProfile = null;
-      lastVaccines = [];
-
-      tabQuick.classList.add('active');
-      tabDetailed.classList.remove('active');
-      quickSummaryEl.classList.remove('hidden');
-      detailedResultsEl.classList.add('hidden');
-      printBtnGlobal.textContent = 'Print quick summary';
-    });
-
-    document.getElementById('print-btn').addEventListener('click', function () {
-      if (!lastProfile) return;
-      if (tabQuick.classList.contains('active')) {
-        if (!lastVaccines || lastVaccines.length === 0) return;
-        buildPrintQuickSummary(lastProfile, lastVaccines);
-      } else {
-        buildPrintSummary(lastProfile);
-      }
-      window.print();
-    });
-  </script>
-</body>
-</html>
+        the same page while testing.
+::contentReference[oaicite:0]{index=0}
