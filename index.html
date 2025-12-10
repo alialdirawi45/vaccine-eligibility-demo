@@ -14,7 +14,7 @@
       color: #222;
     }
     .page {
-      max-width: 1000px;
+      max-width: 1320px; /* wider page */
       margin: 0 auto;
       padding: 24px 16px 40px;
     }
@@ -34,10 +34,10 @@
     }
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.45fr);
+      grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.9fr); /* wider right side */
       gap: 16px;
     }
-    @media (max-width: 860px) {
+    @media (max-width: 960px) {
       .layout {
         grid-template-columns: 1fr;
       }
@@ -202,13 +202,13 @@
     .indication-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.82rem;
+      font-size: 0.85rem; /* slightly bigger */
       margin-top: 4px;
     }
     .indication-table th,
     .indication-table td {
       border: 1px solid #e5e7eb;
-      padding: 4px 6px;
+      padding: 6px 8px; /* more padding */
       vertical-align: top;
     }
     .indication-table th {
@@ -217,7 +217,7 @@
     }
     .vaccine-col {
       font-weight: 600;
-      width: 22%;
+      width: 18%;
     }
     .yes-highlight {
       display: inline-block;
@@ -510,14 +510,12 @@
       'smoker': 'Current smoker'
     };
 
-    // Prices (per dose) for private-pay vaccines at this pharmacy
     const PRICE_PREVNAR20 = 145;
     const PRICE_SHINGRIX = 205;
     const PRICE_ABRYSVO = 290;
     const PRICE_GARDASIL9 = 225;
-    const PRICE_ADACEL = 70; // not currently displayed, kept for future use
+    const PRICE_ADACEL = 70;
 
-    // Priority ordering: lower = higher priority
     const PRIORITY_ORDER = {
       'pcv20': 1,
       'pcv20-private': 1,
@@ -537,7 +535,6 @@
       return PRIORITY_ORDER[v.id] !== undefined ? PRIORITY_ORDER[v.id] : 99;
     }
 
-    // For quick summary grouping
     const QUICK_GROUPS = [
       { key: 'pcv20', label: 'Prevnar 20 (PCV20)', matchIds: ['pcv20', 'pcv20-private'] },
       { key: 'shingrix', label: 'Shingrix (RZV)', matchIds: ['shingrix-public', 'shingrix-private'] },
@@ -548,7 +545,6 @@
       { key: 'tdap', label: 'Tdap/Td (Adacel)', matchIds: ['tdap'] }
     ];
 
-    // For indication/coverage ordering: Shingrix/Prevnar/RSV first
     const INDIC_ORDER = {
       'shingrix': 1,
       'pcv20': 1,
@@ -562,7 +558,7 @@
     let lastProfile = null;
     let lastVaccines = [];
 
-    // ---------- Helpers -------------------------------------------------
+    // ---------- Helpers --------------------------------------------------
 
     function getPatientProfile() {
       const age = parseInt(document.getElementById('age').value, 10);
@@ -605,7 +601,6 @@
       return unique;
     }
 
-    // Collapse public vs private so each vaccine appears only once
     function collapsePublicPrivate(vaxList) {
       let filtered = [...vaxList];
 
@@ -626,7 +621,7 @@
       return filtered;
     }
 
-    // ---------- Core logic: recommended vaccines (for quick & print) ----
+    // ---------- Core vaccine logic (eligibility list) --------------------
 
     function evaluateVaccines(profile) {
       const vax = [];
@@ -641,7 +636,7 @@
       const highRisk = isHighRiskAdult(profile);
       const pregnantWindow = profile.pregnantWindow;
 
-      // 1. Influenza
+      // Influenza
       if (age >= 2) {
         vax.push({
           id: 'influenza',
@@ -660,7 +655,7 @@
         });
       }
 
-      // 2. COVID-19 (updated formulations, adults)
+      // COVID-19
       if (age >= 18) {
         let reason = 'Annual updated COVID-19 vaccine is recommended for adults, with strongest emphasis on adults ≥65 and those with chronic conditions or immunocompromise.';
         if (is65plus || highRisk) {
@@ -683,7 +678,7 @@
         });
       }
 
-      // 3. Pneumococcal – PCV20 (Prevnar 20)
+      // Pneumococcal – PCV20 (Prevnar 20)
       if (isAdult) {
         const highRiskAgain = isHighRiskAdult(profile);
         if (is65plus || highRiskAgain) {
@@ -707,11 +702,12 @@
         }
       }
 
-      // 4. Shingrix (RZV)
+      // Shingrix (RZV)
       if (age >= 18) {
         const isImmuno = hasRisk(profile, 'immunocompromised');
         const is50plus = age >= 50;
 
+        // Public window 65–70
         if (age >= 65 && age <= 70) {
           vax.push({
             id: 'shingrix-public',
@@ -730,6 +726,7 @@
           });
         }
 
+        // Private-pay (50+ or immunocompromised adults)
         if (is50plus || isImmuno) {
           const reasonParts = [];
           if (is50plus) reasonParts.push('Adult ≥50 – routine RZV prevention of shingles and post-herpetic neuralgia.');
@@ -752,8 +749,8 @@
         }
       }
 
-      // 5. RSV – Abrysvo (RSVpreF)
-      if (age >= 60 || pregnantWindow) {
+      // RSV – Abrysvo
+      if (age >= 60 || profile.pregnantWindow) {
         const is60plus2 = age >= 60;
         const is75plus2 = age >= 75;
         const highRisk2 = isHighRiskAdult(profile);
@@ -793,7 +790,7 @@
           });
         }
 
-        if (pregnantWindow) {
+        if (profile.pregnantWindow) {
           vax.push({
             id: 'rsv-preg',
             name: 'RSV vaccine – Abrysvo (maternal use)',
@@ -812,8 +809,8 @@
         }
       }
 
-      // 6. Tdap / Td – adult boosters (Adacel)
-      if (isAdult) {
+      // Tdap / Td – Adacel
+      if (age >= 18) {
         vax.push({
           id: 'tdap',
           name: 'Tdap / Td (tetanus–diphtheria ± pertussis) – Adacel',
@@ -831,7 +828,7 @@
         });
       }
 
-      // 7. HPV – Gardasil 9 (9vHPV)
+      // HPV – Gardasil 9
       if (age >= 9 && age <= 45) {
         if (age >= 12 && age <= 17) {
           vax.push({
@@ -877,7 +874,7 @@
       return vax;
     }
 
-    // ---------- Quick summary rendering --------------------------------
+    // ---------- Quick summary rendering ----------------------------------
 
     function renderQuickSummary(vaccines) {
       const container = document.getElementById('quick-summary');
@@ -938,7 +935,7 @@
       container.innerHTML = html;
     }
 
-    // ---------- Indication / Recommendation / Coverage ------------------
+    // ---------- Indication / coverage logic --------------------------------
 
     function evaluateIndicationCoverage(profile) {
       const age = profile.age;
@@ -961,10 +958,10 @@
         return 'No public coverage for this patient.';
       }
 
-      // 1. Influenza
+      // Influenza
       {
-        const indicated = age >= 1; // approximates ≥6 months
-        const recommended = age >= 2; // tool focus
+        const indicated = age >= 1;
+        const recommended = age >= 2;
         const cov = recommended ? coverageText({ publicPharm: true }) : coverageText({ publicMD: true });
         rows.push({
           key: 'influenza',
@@ -981,9 +978,9 @@
         });
       }
 
-      // 2. COVID-19
+      // COVID-19
       {
-        const indicated = age >= 6; // really 6 months+, approximated
+        const indicated = age >= 6;
         const recommended = age >= 18;
         const cov = recommended ? coverageText({ publicPharm: true }) : coverageText({ publicMD: true });
         rows.push({
@@ -1001,9 +998,9 @@
         });
       }
 
-      // 3. Pneumococcal – PCV20 (Prevnar 20)
+      // PCV20
       {
-        const indicated = age >= 1; // approximates ≥6 months
+        const indicated = age >= 1;
         const recommended = is65plus || highRisk;
         const cov = recommended
           ? coverageText({ publicMD: true })
@@ -1024,7 +1021,7 @@
         });
       }
 
-      // 4. Shingrix (RZV)
+      // Shingrix
       {
         const indicated = (age >= 50) || (immuno && isAdult);
         const recommended = indicated;
@@ -1048,7 +1045,7 @@
         });
       }
 
-      // 5. RSV – Abrysvo
+      // RSV – Abrysvo
       {
         const indicated = (age >= 60) || pregnantWindow;
         const recommended = indicated;
@@ -1075,7 +1072,7 @@
         });
       }
 
-      // 6. Tdap / Td – Adacel
+      // Tdap/Td
       {
         const indicated = isAdult;
         const recommended = isAdult;
@@ -1096,7 +1093,7 @@
         });
       }
 
-      // 7. HPV – Gardasil 9
+      // HPV
       {
         const indicated = age >= 9 && age <= 45;
         const recommended =
@@ -1127,7 +1124,7 @@
         });
       }
 
-      // Always list Shingrix/Prevnar/RSV first, then others
+      // Order: Shingrix/Prevnar/RSV → Flu/COVID → HPV/Tdap
       rows.sort((a, b) => {
         const pa = INDIC_ORDER[a.key] !== undefined ? INDIC_ORDER[a.key] : 99;
         const pb = INDIC_ORDER[b.key] !== undefined ? INDIC_ORDER[b.key] : 99;
@@ -1192,7 +1189,7 @@
       container.innerHTML = html;
     }
 
-    // ---------- Print: QUICK summary -----------------------------------
+    // ---------- Print builders -------------------------------------------
 
     function buildPrintQuickSummary(profile, vaccines) {
       const container = document.getElementById('print-area');
@@ -1301,8 +1298,6 @@
       `;
     }
 
-    // ---------- Print: INDICATION & COVERAGE summary -------------------
-
     function buildPrintSummary(profile) {
       const container = document.getElementById('print-area');
       const now = new Date();
@@ -1401,7 +1396,7 @@
       `;
     }
 
-    // ---------- Tab switching & theme toggle ---------------------------
+    // ---------- UI wiring -------------------------------------------------
 
     const tabQuick = document.getElementById('tab-quick');
     const tabDetailed = document.getElementById('tab-detailed');
@@ -1432,8 +1427,6 @@
       themeToggleBtn.textContent = isDark ? 'Light mode' : 'Dark mode';
     });
 
-    // ---------- Events --------------------------------------------------
-
     document.getElementById('eligibility-form').addEventListener('submit', function (e) {
       e.preventDefault();
       const profile = getPatientProfile();
@@ -1442,7 +1435,6 @@
       const collapsed = collapsePublicPrivate(rawVaccines);
       let vaccines = uniqueVaccines(collapsed);
 
-      // Apply quick-summary ordering: Prevnar/Shingrix/RSV → Flu/COVID → HPV/Tdap
       vaccines.sort((a, b) => getPriority(a) - getPriority(b));
 
       lastProfile = profile;
